@@ -1,6 +1,5 @@
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QWidget,
-    QCheckBox, QLineEdit, QGroupBox, QVBoxLayout)
+from PyQt5.QtWidgets import (QWidget, QCheckBox, QLineEdit, QGroupBox, QVBoxLayout)
 from PyQt5.uic import loadUi
 
 from msc import ES2Collection, ES2ValueType
@@ -28,14 +27,14 @@ class EditWidget(QWidget):
             if self.item.header.collection_type == ES2Collection.List:
                 for item in self.item.value:
                     self._add_edit_widgets_to_layout(
-                            self.item.header.value_type,
-                            '',
-                            item)
+                        self.item.header.value_type,
+                        '',
+                        item)
         else:
             self._add_edit_widgets_to_layout(
-                    self.item.header.value_type,
-                    self.tag,
-                    self.item.value)
+                self.item.header.value_type,
+                self.tag,
+                self.item.value)
         self.get_widget_container().setAlignment(Qt.AlignTop)
 
     def _add_edit_widgets_to_layout(self, value_type, label, value):
@@ -50,7 +49,6 @@ class EditWidget(QWidget):
             widget.show()
             wrapper_layout.addWidget(widget)
         self.get_widget_container().addWidget(wrapper)
-        
 
     def _make_edit_widgets(self, value_type, label, value):
         widgets = []
@@ -181,7 +179,6 @@ class EditWidget(QWidget):
                 values.append(self._get_widget_result(widget, ES2ValueType.float))
             return ES2Color(*values)
 
-
     def get_value(self):
         if self.item.header.collection_type != ES2Collection.Null:
             if self.item.header.collection_type == ES2Collection.List:
@@ -193,7 +190,6 @@ class EditWidget(QWidget):
         else:
             widget = self.get_widget_container().itemAt(0).widget()
             return self._get_widget_result(widget, self.item.header.value_type)
-
 
     def get_widget_container(self):
         return self.ui.editWidgetsContainer.layout()

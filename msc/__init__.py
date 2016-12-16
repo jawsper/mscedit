@@ -3,11 +3,11 @@
 import struct
 from collections import OrderedDict
 from enum import Enum, IntEnum
-import shutil
-import sys
+
 
 class ES2InvalidDataException(Exception):
     pass
+
 
 class ES2Collection(Enum):
     NativeArray = 81
@@ -22,6 +22,7 @@ class ES2Collection(Enum):
     Settings = 125
     Tag = 126
     Encrypt = 127
+
 
 class ES2ValueType(IntEnum):
     Null         =  0
@@ -50,6 +51,7 @@ class ES2Header:
     def __repr__(self):
         return 'ES2Header({})'.format(self.collection_type)
 
+
 class ES2Tag:
     def __init__(self, tag=None, position=None, settings_position=None, next_tag_position=None):
         if tag is None:
@@ -69,6 +71,7 @@ class ES2Tag:
         return 'ES2Tag("{}")'.format(
             self.tag, self.position, self.settings_position, self.next_tag_position)
 
+
 class ES2Color:
     def __init__(self, r, g, b, a):
         self.color = (r, g, b, a)
@@ -80,21 +83,24 @@ class ES2Color:
     def __repr__(self):
         return 'ES2Color({}, {}, {}, {})'.format(self.r, self.g, self.b, self.a)
 
+
 class ES2Transform:
     def __init__(self):
-        self.position = Vector3()    # Vector3
-        self.rotation = Quaternion() # Quaternion
-        self.scale = Vector3()       # Vector3
+        self.position = Vector3()
+        self.rotation = Quaternion()
+        self.scale = Vector3()
         self.layer = ''
 
     def __repr__(self):
         return 'ES2Transform({}, {}, {}, "{}")'.format(
             self.position, self.rotation, self.scale, self.layer)
 
+
 class ES2Field:
     def __init__(self, header, value):
         self.header = header
         self.value = value
+
 
 class MeshSettings:
     def __init__(self, data):
@@ -121,6 +127,7 @@ class MeshSettings:
     def get_bytes(self):
         return struct.pack('B', len(self.raw)) + self.raw
 
+
 class Vector3:
     def __init__(self, x=0.0, y=0.0, z=0.0):
         self.x, self.y, self.z = x, y, z
@@ -131,6 +138,7 @@ class Vector3:
     def __repr__(self):
         return 'Vector3({}, {}, {})'.format(*self.list())
 
+
 class Quaternion:
     def __init__(self, x=0.0, y=0.0, z=0.0, w=0.0):
         self.x, self.y, self.z, self.w = x, y, z, w
@@ -140,6 +148,7 @@ class Quaternion:
 
     def __repr__(self):
         return 'Quaternion({}, {}, {}, {})'.format(*self.list())
+
 
 class Mesh:
     def __init__(self):
@@ -181,7 +190,7 @@ class ES2Reader:
         b = self.read_byte()
         if not b:
             return False
-        if b != 126: # ~
+        if b != 126:  # '~'
             raise ES2InvalidDataException
         self.current_tag.tag = self.read_string()
         self.current_tag.next_tag_position = self.read_int() + self.stream.tell()
@@ -221,7 +230,7 @@ class ES2Reader:
             return ''
         if num2 > 127:
             raise NotImplementedError('Long strings not supported yet')
-        return self.stream.read(num2).decode('ascii') # todo: implement longer strings (is it even hard?)
+        return self.stream.read(num2).decode('ascii')  # todo: implement longer strings (is it even hard?)
 
     def read_7bit_encoded_int(self):
         num = 0
@@ -264,8 +273,10 @@ class ES2Reader:
 
     def read_vector2(self):
         return self.read('ff')
+
     def read_vector3(self):
         return Vector3(*self.read('fff'))
+
     def read_vector4(self):
         return self.read('ffff')
 
@@ -289,7 +300,7 @@ class ES2Reader:
         if mesh_settings.save_normals:
             mesh.normals = self._read_array(ES2ValueType.vector3)
         else:
-            pass # mesh.recalculate_normals
+            pass  # mesh.recalculate_normals
         if mesh_settings.save_uv:
             mesh.uv = self._read_array(ES2ValueType.vector2)
         if mesh_settings.save_uv2:
@@ -344,14 +355,14 @@ class ES2Reader:
                 if b < 81:
                     if collection_type == ES2Collection.Dictionary:
                         pass
-                        #key_type = hash???
+                        # key_type = hash???
                     else:
                         pass
-                        #value_type = hash???
+                        # value_type = hash???
                     raise NotImplementedError('Dictionary not implemented')
                     return ES2Header(collection_type, key_type, value_type, settings)
                 if b >= 101:
-                    raise ES2InvalidDataException;
+                    raise ES2InvalidDataException
                 collection_type = ES2Collection(b)
                 if collection_type == ES2Collection.Dictionary:
                     b2 = self.read_byte()
@@ -359,12 +370,13 @@ class ES2Reader:
                         value_type = ES2ValueType(self.read_int())
                         key_type = ES2ValueType(self.read_int())
                         return ES2Header(collection_type, key_type, value_type, settings)
-                    #value_type = hash???
+                    # value_type = hash???
         if collection_type == ES2Collection.Dictionary:
             key_type = ES2ValueType(self.read_int())
         else:
             value_type = ES2ValueType(self.read_int())
         return ES2Header(collection_type, key_type, value_type, settings)
+
 
 class ES2Writer:
     def __init__(self, stream):
@@ -413,10 +425,13 @@ class ES2Writer:
 
     def write_vector2(self, param):
         self.write('ff', *param)
+
     def write_vector3(self, param):
         self.write('fff', *param.list())
+
     def write_vector4(self, param):
         self.write('ffff', *param)
+
     def write_quaternion(self, param):
         self.write('ffff', *param.list())
 
@@ -469,7 +484,6 @@ class ES2Writer:
         func_name = 'write_{}'.format(value_type.name)
         getattr(self, func_name)(param)
 
-
     def _write_header(self, tag, collection_type, value_type, key_type):
         self.write_byte(126)
         self.write_string(tag)
@@ -480,7 +494,7 @@ class ES2Writer:
             self.write_byte(collection_type.value)
         self.write_byte(255)
         self.write_int32(value_type)
-        if(key_type != None):
+        if key_type is not None:
             self.write_int32(key_type)
 
         return length_position
@@ -493,7 +507,6 @@ class ES2Writer:
 
     def _write_terminator(self):
         self.write_byte(123)
-
 
     def save(self, key, value):
         self.data[key] = value
@@ -515,7 +528,7 @@ class ES2Writer:
             if collection_type == ES2Collection.List:
                 self._write_list(header.value_type, value)
             else:
-                func_name = 'write_' + value_type.name #type(value).__name__
+                func_name = 'write_' + value_type.name  # type(value).__name__
                 if hasattr(self, func_name):
                     getattr(self, func_name)(value)
                 else:
@@ -627,6 +640,7 @@ class ES2Writer:
 #         except:
 #             return None
 
+
 def type_get_hash(name):
     if len(name) == 0:
         return 0
@@ -653,6 +667,7 @@ def type_get_hash(name):
     num ^= num << 25
     return num + (num >> 6)
 
+
 class MSCFile:
     def __init__(self, filename):
         self.filename = filename
@@ -667,7 +682,7 @@ class MSCFile:
             if tag.startswith('ShitWellLevel'):
                 entry.value = 5.0
             if tag == 'WindshieldBroken':
-                if entry.value == True:
+                if entry.value is True:
                     entry.value = False
 
         with open(filename + '.out', 'wb') as f:
@@ -680,15 +695,13 @@ class MSCFile:
         taglist.sort()
         maxlen = 0
         for tag in taglist:
-            if(len(tag) > maxlen):
+            if len(tag) > maxlen:
                 maxlen = len(tag)
         for tag in taglist:
             value = self.entries[tag].value
             # if not entry.is_array:
             #     continue
             print('{tag: <{maxlen}} {value}'.format(
-                tag=tag, 
+                tag=tag,
                 maxlen=maxlen,
-                value=value))#,
-                #raw_value=''.join('{:02x}'.format(c) for c in entry.data)))
-
+                value=value))

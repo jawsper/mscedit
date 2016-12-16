@@ -1,8 +1,7 @@
 import os
 
 from PyQt5.QtCore import (Qt, QSortFilterProxyModel)
-from PyQt5.QtWidgets import (QMainWindow, qApp,
-    QFileDialog, QDialog)
+from PyQt5.QtWidgets import (QMainWindow, qApp, QFileDialog, QDialog)
 from PyQt5.uic import loadUi
 
 from msc import ES2Reader, ES2Writer
@@ -73,7 +72,6 @@ class MainWindow(QMainWindow):
                 writer.save(k, v)
             writer.save_all()
 
-
     def menu_close(self):
         self.ui.action_Save.setEnabled(False)
         self.ui.action_Close.setEnabled(False)
@@ -87,14 +85,15 @@ class MainWindow(QMainWindow):
         self.ui.treeView.resizeColumnToContents(0)
 
     def treeView_selectionChanged(self):
-        indexes = self.ui.treeView.selectionModel().selection().indexes()
-        if len(indexes) > 0:
-            index = indexes[0]
-            tag = self.datamodel.data(index)
+        pass
+        # indexes = self.ui.treeView.selectionModel().selection().indexes()
+        # if len(indexes) > 0:
+        #     index = indexes[0]
+        #     tag = self.datamodel.data(index)
 
-            # print('selectionChanged')
-            # print(self.file_data[item].header.value_type)
-            # print(self.file_data[item].value)
+        #     print('selectionChanged')
+        #     print(self.file_data[item].header.value_type)
+        #     print(self.file_data[item].value)
 
     def treeView_doubleClicked(self):
         index = self.ui.treeView.selectionModel().selection().indexes()[0]
@@ -111,4 +110,3 @@ class MainWindow(QMainWindow):
 
     def searchField_textChanged(self, text):
         self.datamodel.setFilterWildcard(text)
-

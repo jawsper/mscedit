@@ -3,7 +3,6 @@
 import os
 
 from PyQt5.QtWidgets import QApplication
-from PyQt5.uic import loadUi
 
 from gui import MainWindow
 

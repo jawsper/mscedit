@@ -1,6 +1,7 @@
 import sys
 from msc import MSCFile
 
+
 if __name__ == '__main__':
     # print(type_get_hash('System.Boolean'), type_name_to_hash['bool'])
     # sys.exit(0)

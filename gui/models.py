@@ -1,5 +1,6 @@
 from PyQt5.QtCore import Qt, QAbstractItemModel, QModelIndex
 
+
 class TreeItem(object):
     def __init__(self, data, parent=None):
         self.parentItem = parent
@@ -37,6 +38,7 @@ class TreeItem(object):
         if self.parentItem:
             return self.parentItem.childItems.index(self)
         return 0
+
 
 class TreeModel(QAbstractItemModel):
     def __init__(self, data, parent=None):
@@ -135,9 +137,8 @@ class TreeModel(QAbstractItemModel):
                         str(entry.value)
                     ], parents[-1]))
 
-
-        indentations = [0]
-        number = 0
+        # indentations = [0]
+        # number = 0
 
         # while number < len(lines):
         #     position = 0
@@ -169,5 +170,3 @@ class TreeModel(QAbstractItemModel):
         #         parents[-1].appendChild(TreeItem(columnData, parents[-1]))
 
         #     number += 1
-
-

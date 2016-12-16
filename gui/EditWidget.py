@@ -6,7 +6,8 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
+
 
 class Ui_EditWidget(object):
     def setupUi(self, EditWidget):
@@ -37,4 +38,3 @@ class Ui_EditWidget(object):
         _translate = QtCore.QCoreApplication.translate
         EditWidget.setWindowTitle(_translate("EditWidget", "Form"))
         self.label.setText(_translate("EditWidget", "TextLabel"))
-
