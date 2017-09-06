@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>MSCEdit</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -47,7 +47,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>25</height>
+     <height>19</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_File">
@@ -68,13 +68,20 @@
      <property name="title">
       <string>Search &amp;mode</string>
      </property>
-     <addaction name="actionCase_sensitive"/>
-     <addaction name="separator"/>
+     <addaction name="action_CaseSensitive"/>
     </widget>
     <addaction name="menuSearch_mode"/>
    </widget>
+   <widget class="QMenu" name="menu_Tools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <addaction name="action_BoltChecker"/>
+    <addaction name="action_ShowMap"/>
+   </widget>
    <addaction name="menu_File"/>
    <addaction name="menuSettings"/>
+   <addaction name="menu_Tools"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_Open">
@@ -115,12 +122,22 @@
     <string>Ctrl+Q</string>
    </property>
   </action>
-  <action name="actionCase_sensitive">
+  <action name="action_CaseSensitive">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
     <string>&amp;Case sensitive</string>
+   </property>
+  </action>
+  <action name="action_ShowMap">
+   <property name="text">
+    <string>Show &amp;map</string>
+   </property>
+  </action>
+  <action name="action_BoltChecker">
+   <property name="text">
+    <string>&amp;Bolt checker</string>
    </property>
   </action>
  </widget>
