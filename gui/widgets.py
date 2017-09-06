@@ -1,9 +1,15 @@
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QWidget, QCheckBox, QLineEdit, QGroupBox, QVBoxLayout)
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtWidgets import (QWidget, QCheckBox, QLineEdit, QGroupBox, QVBoxLayout, QLabel)
 from PyQt5.uic import loadUi
 
 from msc import ES2Collection, ES2ValueType
 from msc import ES2Transform, ES2Color, Vector3, Quaternion
+
+
+class ClickableLabel(QLabel):
+    mousePressed = pyqtSignal('QMouseEvent')
+    def mousePressEvent(self, event):
+        self.mousePressed.emit(event)
 
 
 class EditWidget(QWidget):
