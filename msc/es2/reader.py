@@ -1,0 +1,204 @@
+from collections import OrderedDict
+import struct
+
+from .exceptions import ES2InvalidDataException
+from .enums import ES2Collection, ES2ValueType
+from .types import ES2Header, ES2Tag, ES2Field, ES2Color, ES2Transform, Vector3, Quaternion, MeshSettings, Mesh
+
+class ES2Reader:
+    def __init__(self, stream):
+        self.stream = stream
+        self.current_tag = ES2Tag("", 0, 0, 0)
+
+    def next(self):
+        self.stream.seek(self.current_tag.next_tag_position)
+        self.current_tag.position = self.stream.tell()
+        b = self.read_byte()
+        if not b:
+            return False
+        if b != 126:  # '~'
+            raise ES2InvalidDataException
+        self.current_tag.tag = self.read_string()
+        self.current_tag.next_tag_position = self.read_int() + self.stream.tell()
+        self.current_tag.settings_position = self.stream.tell()
+        return True
+
+    def reset(self):
+        self.stream.seek(0)
+        self.current_tag = ES2Tag()
+
+    def read_all(self):
+        data = OrderedDict()
+        self.reset()
+        while self.next():
+            header = self.read_header()
+            if header.settings['encrypt']:
+                raise NotImplementedError('Cannot deal with encryption sorry not sorry.')
+            elif header.collection_type != ES2Collection.Null:
+                if header.collection_type == ES2Collection.List:
+                    self.read_byte()
+                    num = self.read_int()
+                    val = []
+                    for i in range(num):
+                        val.append(self._read_type(header.value_type))
+                    data[self.current_tag.tag] = val
+            else:
+                data[self.current_tag.tag] = self._read_type(header.value_type)
+
+            data[self.current_tag.tag] = ES2Field(header, data.get(self.current_tag.tag, None))
+        return data
+
+    def read_string(self):
+        num2 = self.read_7bit_encoded_int()
+        if num2 < 0:
+            raise Exception("Invalid string")
+        if num2 == 0:
+            return ''
+        if num2 > 127:
+            raise NotImplementedError('Long strings not supported yet')
+        return self.stream.read(num2).decode('ascii')  # todo: implement longer strings (is it even hard?)
+
+    def read_7bit_encoded_int(self):
+        num = 0
+        num2 = 0
+        while num2 != 35:
+            b = self.read_byte()
+            num |= (b & 127) << num2
+            num2 += 7
+            if((b & 128) == 0):
+                return num
+        raise Exception("Format_Bad7BitInt32")
+
+    def read_int(self):
+        return self.read('I')
+
+    def read_byte(self):
+        return self.read('B')
+
+    def read_float(self):
+        return self.read('f')
+
+    def read_bool(self):
+        return bool(self.read_byte())
+
+    def read_color(self):
+        return ES2Color(*self.read('ffff'))
+
+    def read_transform(self):
+        transform = ES2Transform()
+        for i in range(self.read_byte()):
+            if i == 0:
+                transform.position = self.read_vector3()
+            elif i == 1:
+                transform.rotation = self.read_quaternion()
+            elif i == 2:
+                transform.scale = self.read_vector3()
+            elif i == 3:
+                transform.layer = self.read_string()
+        return transform
+
+    def read_vector2(self):
+        return self.read('ff')
+
+    def read_vector3(self):
+        return Vector3(*self.read('fff'))
+
+    def read_vector4(self):
+        return self.read('ffff')
+
+    def read_quaternion(self):
+        return Quaternion(*self.read('ffff'))
+
+    def read_mesh(self):
+        # print('-----read_mesh-----')
+        mesh_settings = MeshSettings(self.stream.read(self.read_byte()))
+
+        mesh = Mesh()
+        mesh.vertices = self._read_array(ES2ValueType.vector3)
+        mesh.triangles = self._read_array(ES2ValueType.int)
+        if mesh_settings.save_submeshes:
+            mesh.submesh_count = self.read_int()
+            for i in range(mesh.submesh_count):
+                mesh.set_triangles(self._read_array(ES2ValueType.int), i)
+        if mesh_settings.save_skinning:
+            mesh.bindposes = self._read_array(ES2ValueType.matrix4x4)
+            mesh.bone_weights = self._read_array(ES2ValueType.boneweight)
+        if mesh_settings.save_normals:
+            mesh.normals = self._read_array(ES2ValueType.vector3)
+        else:
+            pass  # mesh.recalculate_normals
+        if mesh_settings.save_uv:
+            mesh.uv = self._read_array(ES2ValueType.vector2)
+        if mesh_settings.save_uv2:
+            mesh.uv2 = self._read_array(ES2ValueType.vector2)
+        if mesh_settings.save_tangents:
+            mesh.tangents = self._read_array(ES2ValueType.vector4)
+        if mesh_settings.save_colors:
+            mesh.colors32 = self._read_array(ES2ValueType.color)
+        # print(mesh.vertices)
+        # print(mesh.triangles)
+
+        # print('-------------------')
+        # print()
+        mesh.settings = mesh_settings
+        return mesh
+
+    def _read_array(self, type):
+        array = []
+        count = self.read_int()
+        for i in range(count):
+            array.append(self._read_type(type))
+        return array
+
+    def _read_type(self, value_type):
+        try:
+            func_name = 'read_' + value_type.name
+            return getattr(self, func_name)()
+        except AttributeError:
+            raise NotImplementedError("Value type {} not implemented".format(value_type))
+
+    def read(self, fmt):
+        try:
+            val = struct.unpack(fmt, self.stream.read(struct.calcsize(fmt)))
+            if len(val) == 1:
+                return val[0]
+            return val
+        except struct.error:
+            return None
+
+    def read_header(self):
+        collection_type = ES2Collection.Null
+        key_type = None
+        value_type = ES2ValueType.Null
+        settings = {'encrypt': False, 'debug': False}
+        while True:
+            b = self.read_byte()
+            if b == 127:
+                settings['encrypt'] = True
+            elif b != 123:
+                if b == 255:
+                    break
+                if b < 81:
+                    if collection_type == ES2Collection.Dictionary:
+                        pass
+                        # key_type = hash???
+                    else:
+                        pass
+                        # value_type = hash???
+                    raise NotImplementedError('Dictionary not implemented')
+                    return ES2Header(collection_type, key_type, value_type, settings)
+                if b >= 101:
+                    raise ES2InvalidDataException
+                collection_type = ES2Collection(b)
+                if collection_type == ES2Collection.Dictionary:
+                    b2 = self.read_byte()
+                    if b2 == 255:
+                        value_type = ES2ValueType(self.read_int())
+                        key_type = ES2ValueType(self.read_int())
+                        return ES2Header(collection_type, key_type, value_type, settings)
+                    # value_type = hash???
+        if collection_type == ES2Collection.Dictionary:
+            key_type = ES2ValueType(self.read_int())
+        else:
+            value_type = ES2ValueType(self.read_int())
+        return ES2Header(collection_type, key_type, value_type, settings)

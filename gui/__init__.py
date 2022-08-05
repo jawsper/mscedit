@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QMainWindow, qApp, QFileDialog, QDialog, QSizePolic
 from PyQt5.QtGui import (QPixmap, QPainter, QPen)
 from PyQt5.uic import loadUi
 
-from msc import ES2Reader, ES2Writer, ES2ValueType
+from msc.es2 import ES2Reader, ES2Writer, ES2ValueType
 from gui.models import TreeModel
 
 

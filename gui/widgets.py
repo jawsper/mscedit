@@ -2,8 +2,8 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import (QWidget, QCheckBox, QLineEdit, QGroupBox, QVBoxLayout, QLabel)
 from PyQt5.uic import loadUi
 
-from msc import ES2Collection, ES2ValueType
-from msc import ES2Transform, ES2Color, Vector3, Quaternion
+from msc.es2 import ES2Collection, ES2ValueType
+from msc.es2.types import ES2Transform, ES2Color, Vector3, Quaternion
 
 
 class ClickableLabel(QLabel):

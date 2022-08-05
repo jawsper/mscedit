@@ -1,5 +1,5 @@
 import sys
-from msc import MSCFile
+from .mscfile import MSCFile
 
 
 if __name__ == '__main__':
