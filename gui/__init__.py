@@ -95,7 +95,7 @@ class MapViewDialog(QDialog):
         y_range = 1823, -1548
         x = scale_value(raw_x, x_range[0], x_range[1], 0, self.background.width())
         y = scale_value(raw_z, y_range[0], y_range[1], 0, self.background.height())
-        self.markers.append((x, y))
+        self.markers.append((int(x), int(y)))
 
 
 class MainWindow(QMainWindow):
