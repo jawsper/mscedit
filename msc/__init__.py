@@ -128,4 +128,3 @@ def type_get_hash(name):
     num += num >> 17
     num ^= num << 25
     return num + (num >> 6)
-

@@ -1,5 +1,6 @@
 import struct
 
+
 class ES2Header:
     def __init__(self, collection_type, key_type, value_type, settings):
         self.collection_type = collection_type
@@ -8,11 +9,13 @@ class ES2Header:
         self.settings = settings
 
     def __repr__(self):
-        return 'ES2Header({})'.format(self.collection_type)
+        return f"ES2Header({self.collection_type})"
 
 
 class ES2Tag:
-    def __init__(self, tag=None, position=None, settings_position=None, next_tag_position=None):
+    def __init__(
+        self, tag=None, position=None, settings_position=None, next_tag_position=None
+    ):
         if tag is None:
             self.tag = None
             self.position = 0
@@ -27,8 +30,7 @@ class ES2Tag:
             self.is_null = False
 
     def __repr__(self):
-        return 'ES2Tag("{}")'.format(
-            self.tag, self.position, self.settings_position, self.next_tag_position)
+        return f"ES2Tag({self.tag}, {self.position}, {self.settings_position}, {self.next_tag_position})"
 
 
 class ES2Color:
@@ -40,7 +42,7 @@ class ES2Color:
         return [self.r, self.g, self.b, self.a]
 
     def __repr__(self):
-        return 'ES2Color({}, {}, {}, {})'.format(self.r, self.g, self.b, self.a)
+        return f"ES2Color({self.r}, {self.g}, {self.b}, {self.a})"
 
 
 class ES2Transform:
@@ -48,11 +50,10 @@ class ES2Transform:
         self.position = Vector3()
         self.rotation = Quaternion()
         self.scale = Vector3()
-        self.layer = ''
+        self.layer = ""
 
     def __repr__(self):
-        return 'ES2Transform({}, {}, {}, "{}")'.format(
-            self.position, self.rotation, self.scale, self.layer)
+        return f"ES2Transform({self.position}, {self.rotation}, {self.scale}, {self.layer})"
 
 
 class ES2Field:
@@ -84,7 +85,7 @@ class MeshSettings:
             self.save_colors = data[6] != 0
 
     def get_bytes(self):
-        return struct.pack('B', len(self.raw)) + self.raw
+        return struct.pack("B", len(self.raw)) + self.raw
 
 
 class Vector3:
@@ -95,7 +96,7 @@ class Vector3:
         return [self.x, self.y, self.z]
 
     def __repr__(self):
-        return 'Vector3({}, {}, {})'.format(*self.list())
+        return f"Vector3({self.x}, {self.y}, {self.z})"
 
 
 class Quaternion:
@@ -106,7 +107,7 @@ class Quaternion:
         return [self.x, self.y, self.z, self.w]
 
     def __repr__(self):
-        return 'Quaternion({}, {}, {}, {})'.format(*self.list())
+        return f"Quaternion({self.x}, {self.y}, {self.z}, {self.w})"
 
 
 class Mesh:

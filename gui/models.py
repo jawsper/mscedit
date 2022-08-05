@@ -131,11 +131,9 @@ class TreeModel(QAbstractItemModel):
         for tag, entry in data.items():
             parents[-1].appendChild(
                 TreeItem(
-                    [
-                        tag,
-                        entry.header.value_type.name,
-                        str(entry.value)
-                    ], parents[-1]))
+                    [tag, entry.header.value_type.name, str(entry.value)], parents[-1]
+                )
+            )
 
         # indentations = [0]
         # number = 0

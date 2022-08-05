@@ -3,9 +3,9 @@ import shutil
 from itertools import cycle
 import re
 
-from PyQt5.QtCore import (Qt, QSortFilterProxyModel, QPoint, pyqtSignal)
-from PyQt5.QtWidgets import (QMainWindow, qApp, QFileDialog, QDialog, QSizePolicy)
-from PyQt5.QtGui import (QPixmap, QPainter, QPen)
+from PyQt5.QtCore import Qt, QSortFilterProxyModel, QPoint, pyqtSignal
+from PyQt5.QtWidgets import QMainWindow, qApp, QFileDialog, QDialog, QSizePolicy
+from PyQt5.QtGui import QPixmap, QPainter, QPen
 from PyQt5.uic import loadUi
 
 from msc.es2 import ES2Reader, ES2Writer, ES2ValueType
@@ -19,7 +19,7 @@ class EditDialog(QDialog):
         self.tag = tag
         self.item = item
 
-        self.ui = loadUi('gui/EditDialog.ui', self)
+        self.ui = loadUi("gui/EditDialog.ui", self)
         self.ui.widget.set_tag(tag)
         self.ui.widget.set_item(item)
 
@@ -33,7 +33,7 @@ class MapViewDialog(QDialog):
 
         self.model = model
 
-        self.ui = loadUi('gui/MapViewDialog.ui', self)
+        self.ui = loadUi("gui/MapViewDialog.ui", self)
         self.ui.addItemButton.clicked.connect(self.button_add_clicked)
         self.ui.clearButton.clicked.connect(self.button_clear_clicked)
 
@@ -45,7 +45,7 @@ class MapViewDialog(QDialog):
         for tag in sorted(transform_tags):
             self.ui.selectionBox.addItem(tag)
 
-        self.background = QPixmap('gui/perjarvi_road_map.png')
+        self.background = QPixmap("gui/perjarvi_road_map.png")
         self.ui.map.setPixmap(self.background)
         self.ui.map.mousePressed.connect(self.map_mouse_pressed)
         self.markers = []
@@ -64,7 +64,7 @@ class MapViewDialog(QDialog):
         self.draw_markers()
 
     def map_mouse_pressed(self, event):
-        print('map_mouse_pressed')
+        print("map_mouse_pressed")
         print(event.localPos())
 
     def draw_markers(self):
@@ -87,9 +87,13 @@ class MapViewDialog(QDialog):
 
     def add_marker(self, x_pos, y_pos):
         def scale_value(old_value, old_min, old_max, new_min, new_max):
-            return ( (new_max - new_min) * (old_value - old_min) / (old_max - old_min) ) + new_min
+            return (
+                (new_max - new_min) * (old_value - old_min) / (old_max - old_min)
+            ) + new_min
+
         def remap(value, old_min, old_max):
             return scale_value(value, old_min, old_max, 0, 1024)
+
         raw_x, raw_z = x_pos, y_pos
         x_range = -1851, 2334
         y_range = 1823, -1548
@@ -106,9 +110,9 @@ class MainWindow(QMainWindow):
         self.data_changed = False
         self.file_data = None
 
-        self.open_file_dir = os.path.expanduser('~')
+        self.open_file_dir = os.path.expanduser("~")
 
-        self.ui = loadUi('gui/MainWindow.ui', self)
+        self.ui = loadUi("gui/MainWindow.ui", self)
 
         self.ui.action_Open.triggered.connect(self.menu_open)
         self.ui.action_Save.triggered.connect(self.menu_save)
@@ -126,18 +130,20 @@ class MainWindow(QMainWindow):
         self.ui.treeView.setSortingEnabled(True)
 
         self.ui.treeView.doubleClicked.connect(self.treeView_doubleClicked)
-        self.ui.treeView.selectionModel().selectionChanged.connect(self.treeView_selectionChanged)
+        self.ui.treeView.selectionModel().selectionChanged.connect(
+            self.treeView_selectionChanged
+        )
         self.ui.searchField.textChanged.connect(self.searchField_textChanged)
 
     def menu_open(self):
-        fname = QFileDialog.getOpenFileName(self, 'Open file', self.open_file_dir)
+        fname = QFileDialog.getOpenFileName(self, "Open file", self.open_file_dir)
         if fname[0]:
             self.open_file(fname[0])
 
     def open_file(self, filename):
         self.filename = filename
         self.open_file_dir = os.path.dirname(self.filename)
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             reader = ES2Reader(f)
             self.file_data = reader.read_all()
         self.update_tree(self.file_data)
@@ -150,14 +156,14 @@ class MainWindow(QMainWindow):
 
     def menu_save(self):
         for i in range(100):
-            backup_filename = '{}.{}'.format(self.filename, i) 
+            backup_filename = f"{self.filename}.{i}"
             if not os.path.exists(backup_filename):
                 shutil.copy2(self.filename, backup_filename)
                 break
         else:
-            raise Exception('Too many backups!')
+            raise Exception("Too many backups!")
 
-        with open(self.filename, 'wb') as f:
+        with open(self.filename, "wb") as f:
             writer = ES2Writer(f)
             for k, v in self.file_data.items():
                 writer.save(k, v)
@@ -228,7 +234,7 @@ class BoltCheckerDialog(QDialog):
     def __init__(self, model, parent=None):
         super().__init__(parent)
 
-        self.ui = loadUi('gui/BoltCheckerDialog.ui', self)
+        self.ui = loadUi("gui/BoltCheckerDialog.ui", self)
 
         self.ui.boltsList.setColumnCount(3)
 
@@ -237,7 +243,7 @@ class BoltCheckerDialog(QDialog):
         self.find_boltables()
 
         # from PyQt5.QtWidgets import QTreeWidgetItem
-        
+
         self.table = []
         for part in self.boltable_parts:
             pass
@@ -249,64 +255,64 @@ class BoltCheckerDialog(QDialog):
 
     def get_tag_bolted(self, part):
         tag_name = None
-        if part.startswith('Gauge'):
-            part = part[5:] + ' ' + part[:5]
-        elif part == 'SteeringWheel':
-            part = 'stock steering wheel'
-        elif part == 'SportWheel':
-            part = 'sport steering wheel'
-        elif part == 'Rally Wheel':
-            part = 'rally steering wheel'
-        elif part.startswith('CrankBearing'):
-            part = 'main bearing' + part[-1]
-        elif part.startswith('Sparkplug'):
-            part = 'spark plug(clone)' + part[-1]
-        elif part == 'Valvecover':
-            part = 'rocker cover'
-        elif part == 'Crankwheel':
-            part = 'crankshaft pulley'
-        elif part.startswith('Shock_'):
-            position = re.sub(r'^.+_(.+)$', r'\1', part).lower()
-            if position in ['rl', 'rr']:
-                part = 'shock absorber({}xxx)'.format(position)
+        if part.startswith("Gauge"):
+            part = part[5:] + " " + part[:5]
+        elif part == "SteeringWheel":
+            part = "stock steering wheel"
+        elif part == "SportWheel":
+            part = "sport steering wheel"
+        elif part == "Rally Wheel":
+            part = "rally steering wheel"
+        elif part.startswith("CrankBearing"):
+            part = "main bearing" + part[-1]
+        elif part.startswith("Sparkplug"):
+            part = "spark plug(clone)" + part[-1]
+        elif part == "Valvecover":
+            part = "rocker cover"
+        elif part == "Crankwheel":
+            part = "crankshaft pulley"
+        elif part.startswith("Shock_"):
+            position = re.sub(r"^.+_(.+)$", r"\1", part).lower()
+            if position in ["rl", "rr"]:
+                part = f"shock absorber({position}xxx)"
             else:
-                part = 'strut {}(xxxxx)'.format(position)
-        elif part.startswith('Discbrake'):
-            position = re.sub(r'^.+_(.+)$', r'\1', part).lower()
-            part = 'discbrake({}xxx)'.format(position)
-        elif part.startswith('Wishbone'):
-            part = 'IK_' + part
-        elif part.startswith('Headlight'):
-            position = re.sub(r'^Headlight(.+)$', r'\1', part).lower()
-            part = 'headlight(' + position + ((5 - len(position)) * 'x') + ')'
+                part = f"strut {position}(xxxxx)"
+        elif part.startswith("Discbrake"):
+            position = re.sub(r"^.+_(.+)$", r"\1", part).lower()
+            part = f"discbrake({position}xxx)"
+        elif part.startswith("Wishbone"):
+            part = f"IK_{part}"
+        elif part.startswith("Headlight"):
+            position = re.sub(r"^Headlight(.+)$", r"\1", part).lower()
+            part = f"headlight({position}{(5 - len(position)) * 'x'})"
 
         for tag in self.model:
-            if not tag.endswith('Bolted'):
+            if not tag.endswith("Bolted"):
                 continue
             tag_name = tag[:-6]  # strip "Bolted"
-            tag_name = tag_name.replace(' ', '').replace('_', '').lower()
-            part_name = part.replace(' ', '').replace('_', '').lower()
+            tag_name = tag_name.replace(" ", "").replace("_", "").lower()
+            part_name = part.replace(" ", "").replace("_", "").lower()
             # tag_name = re.sub(r'\(.+\)', '', tag_name)  # strip "(Clone)"
             if tag_name == part_name:
                 return tag
-            if tag_name.replace('(clone)','') == part_name:
+            if tag_name.replace("(clone)", "") == part_name:
                 return tag
-            if tag_name.replace('(xxxxx)', '') == part_name:
+            if tag_name.replace("(xxxxx)", "") == part_name:
                 return tag
             # if tag.replace('_', '').replace(' ', '').lower().startswith(part.replace('_', '').replace(' ','').lower()):
             #     self.table.append([tag_name, part_name])
             #     return tag
 
     def get_tag_bolts(self, part):
-        return part + 'Bolts'
+        return part + "Bolts"
 
     def get_tag_tightness(self, part):
-        return part + 'Tightness'
+        return part + "Tightness"
 
     def parts_name(self, part):
-        if part.startswith('Gauge'):
-            part = part[5:] + ' ' + part[:5]
-        return part.lower().replace('_', ' ') + '(Clone)'
+        if part.startswith("Gauge"):
+            part = f"{part[5:]} {part[:5]}"
+        return f"{part.lower().replace('_', ' ')}(Clone)"
 
     def bolts_name(self, part):
         return part
@@ -314,16 +320,23 @@ class BoltCheckerDialog(QDialog):
     def find_boltables(self):
         self.boltable_parts = []
         for tag in self.model.keys():
-            if tag.endswith('Bolts'):
+            if tag.endswith("Bolts"):
                 part_name = tag[:-5]
                 tag_bolted = self.get_tag_bolted(part_name)
                 tag_bolts = self.get_tag_bolts(part_name)
                 tag_tightness = self.get_tag_tightness(part_name)
-                if tag_bolted in self.model and tag_bolts in self.model and tag_tightness in self.model:
-                    part = BoltablePart(part_name, self.model,
+                if (
+                    tag_bolted in self.model
+                    and tag_bolts in self.model
+                    and tag_tightness in self.model
+                ):
+                    part = BoltablePart(
+                        part_name,
+                        self.model,
                         bolted=tag_bolted,
                         bolts=tag_bolts,
-                        tightness=tag_tightness)
+                        tightness=tag_tightness,
+                    )
                     self.boltable_parts.append(part)
                 else:
                     print(part_name)

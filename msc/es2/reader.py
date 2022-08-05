@@ -3,7 +3,18 @@ import struct
 
 from .exceptions import ES2InvalidDataException
 from .enums import ES2Collection, ES2ValueType
-from .types import ES2Header, ES2Tag, ES2Field, ES2Color, ES2Transform, Vector3, Quaternion, MeshSettings, Mesh
+from .types import (
+    ES2Header,
+    ES2Tag,
+    ES2Field,
+    ES2Color,
+    ES2Transform,
+    Vector3,
+    Quaternion,
+    MeshSettings,
+    Mesh,
+)
+
 
 class ES2Reader:
     def __init__(self, stream):
@@ -32,8 +43,8 @@ class ES2Reader:
         self.reset()
         while self.next():
             header = self.read_header()
-            if header.settings['encrypt']:
-                raise NotImplementedError('Cannot deal with encryption sorry not sorry.')
+            if header.settings["encrypt"]:
+                raise NotImplementedError("Cannot deal with encryption sorry.")
             elif header.collection_type != ES2Collection.Null:
                 if header.collection_type == ES2Collection.List:
                     self.read_byte()
@@ -45,7 +56,9 @@ class ES2Reader:
             else:
                 data[self.current_tag.tag] = self._read_type(header.value_type)
 
-            data[self.current_tag.tag] = ES2Field(header, data.get(self.current_tag.tag, None))
+            data[self.current_tag.tag] = ES2Field(
+                header, data.get(self.current_tag.tag, None)
+            )
         return data
 
     def read_string(self):
@@ -53,10 +66,11 @@ class ES2Reader:
         if num2 < 0:
             raise Exception("Invalid string")
         if num2 == 0:
-            return ''
+            return ""
         if num2 > 127:
-            raise NotImplementedError('Long strings not supported yet')
-        return self.stream.read(num2).decode('ascii')  # todo: implement longer strings (is it even hard?)
+            # todo: implement longer strings (is it even hard?)
+            raise NotImplementedError("Long strings not supported yet")
+        return self.stream.read(num2).decode("ascii")
 
     def read_7bit_encoded_int(self):
         num = 0
@@ -65,24 +79,24 @@ class ES2Reader:
             b = self.read_byte()
             num |= (b & 127) << num2
             num2 += 7
-            if((b & 128) == 0):
+            if (b & 128) == 0:
                 return num
         raise Exception("Format_Bad7BitInt32")
 
     def read_int(self):
-        return self.read('I')
+        return self.read("I")
 
     def read_byte(self):
-        return self.read('B')
+        return self.read("B")
 
     def read_float(self):
-        return self.read('f')
+        return self.read("f")
 
     def read_bool(self):
         return bool(self.read_byte())
 
     def read_color(self):
-        return ES2Color(*self.read('ffff'))
+        return ES2Color(*self.read("ffff"))
 
     def read_transform(self):
         transform = ES2Transform()
@@ -98,16 +112,16 @@ class ES2Reader:
         return transform
 
     def read_vector2(self):
-        return self.read('ff')
+        return self.read("ff")
 
     def read_vector3(self):
-        return Vector3(*self.read('fff'))
+        return Vector3(*self.read("fff"))
 
     def read_vector4(self):
-        return self.read('ffff')
+        return self.read("ffff")
 
     def read_quaternion(self):
-        return Quaternion(*self.read('ffff'))
+        return Quaternion(*self.read("ffff"))
 
     def read_mesh(self):
         # print('-----read_mesh-----')
@@ -152,10 +166,10 @@ class ES2Reader:
 
     def _read_type(self, value_type):
         try:
-            func_name = 'read_' + value_type.name
+            func_name = f"read_{value_type.name}"
             return getattr(self, func_name)()
         except AttributeError:
-            raise NotImplementedError("Value type {} not implemented".format(value_type))
+            raise NotImplementedError(f"Value type {value_type} not implemented")
 
     def read(self, fmt):
         try:
@@ -170,11 +184,11 @@ class ES2Reader:
         collection_type = ES2Collection.Null
         key_type = None
         value_type = ES2ValueType.Null
-        settings = {'encrypt': False, 'debug': False}
+        settings = {"encrypt": False, "debug": False}
         while True:
             b = self.read_byte()
             if b == 127:
-                settings['encrypt'] = True
+                settings["encrypt"] = True
             elif b != 123:
                 if b == 255:
                     break
@@ -185,7 +199,7 @@ class ES2Reader:
                     else:
                         pass
                         # value_type = hash???
-                    raise NotImplementedError('Dictionary not implemented')
+                    raise NotImplementedError("Dictionary not implemented")
                     return ES2Header(collection_type, key_type, value_type, settings)
                 if b >= 101:
                     raise ES2InvalidDataException
@@ -195,7 +209,9 @@ class ES2Reader:
                     if b2 == 255:
                         value_type = ES2ValueType(self.read_int())
                         key_type = ES2ValueType(self.read_int())
-                        return ES2Header(collection_type, key_type, value_type, settings)
+                        return ES2Header(
+                            collection_type, key_type, value_type, settings
+                        )
                     # value_type = hash???
         if collection_type == ES2Collection.Dictionary:
             key_type = ES2ValueType(self.read_int())

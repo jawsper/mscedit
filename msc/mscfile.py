@@ -1,24 +1,25 @@
 from .es2.reader import ES2Reader
 from .es2.writer import ES2Writer
 
+
 class MSCFile:
     def __init__(self, filename):
         self.filename = filename
         self.entries = {}
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             reader = ES2Reader(f)
             self.entries = reader.read_all()
 
         # shutil.copyfile(filename, filename + '.bak')
 
         for tag, entry in self.entries.items():
-            if tag.startswith('ShitWellLevel'):
+            if tag.startswith("ShitWellLevel"):
                 entry.value = 5.0
-            if tag == 'WindshieldBroken':
+            if tag == "WindshieldBroken":
                 if entry.value is True:
                     entry.value = False
 
-        with open(filename + '.out', 'wb') as f:
+        with open(f"{filename}.out", "wb") as f:
             writer = ES2Writer(f)
             for k, v in self.entries.items():
                 writer.save(k, v)
@@ -34,7 +35,6 @@ class MSCFile:
             value = self.entries[tag].value
             # if not entry.is_array:
             #     continue
-            print('{tag: <{maxlen}} {value}'.format(
-                tag=tag,
-                maxlen=maxlen,
-                value=value))
+            print(
+                "{tag: <{maxlen}} {value}".format(tag=tag, maxlen=maxlen, value=value)
+            )

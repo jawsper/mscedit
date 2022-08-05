@@ -1,5 +1,12 @@
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtWidgets import (QWidget, QCheckBox, QLineEdit, QGroupBox, QVBoxLayout, QLabel)
+from PyQt5.QtWidgets import (
+    QWidget,
+    QCheckBox,
+    QLineEdit,
+    QGroupBox,
+    QVBoxLayout,
+    QLabel,
+)
 from PyQt5.uic import loadUi
 
 from msc.es2 import ES2Collection, ES2ValueType
@@ -7,7 +14,8 @@ from msc.es2.types import ES2Transform, ES2Color, Vector3, Quaternion
 
 
 class ClickableLabel(QLabel):
-    mousePressed = pyqtSignal('QMouseEvent')
+    mousePressed = pyqtSignal("QMouseEvent")
+
     def mousePressEvent(self, event):
         self.mousePressed.emit(event)
 
@@ -15,7 +23,7 @@ class ClickableLabel(QLabel):
 class EditWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.ui = loadUi('gui/EditWidget.ui', self)
+        self.ui = loadUi("gui/EditWidget.ui", self)
 
         self.tag = None
         self.item = None
@@ -33,14 +41,12 @@ class EditWidget(QWidget):
             if self.item.header.collection_type == ES2Collection.List:
                 for item in self.item.value:
                     self._add_edit_widgets_to_layout(
-                        self.item.header.value_type,
-                        '',
-                        item)
+                        self.item.header.value_type, "", item
+                    )
         else:
             self._add_edit_widgets_to_layout(
-                self.item.header.value_type,
-                self.tag,
-                self.item.value)
+                self.item.header.value_type, self.tag, self.item.value
+            )
         self.get_widget_container().setAlignment(Qt.AlignTop)
 
     def _add_edit_widgets_to_layout(self, value_type, label, value):
@@ -48,10 +54,7 @@ class EditWidget(QWidget):
         wrapper.show()
         wrapper_layout = QVBoxLayout()
         wrapper.setLayout(wrapper_layout)
-        for widget in self._make_edit_widgets(
-                value_type,
-                label,
-                value):
+        for widget in self._make_edit_widgets(value_type, label, value):
             widget.show()
             wrapper_layout.addWidget(widget)
         self.get_widget_container().addWidget(wrapper)
@@ -77,7 +80,7 @@ class EditWidget(QWidget):
         return self.__widget_generic_textbox(label, value)
 
     def _widget_transform(self, label, value):
-        groupbox = QGroupBox('Position')
+        groupbox = QGroupBox("Position")
         layout = QVBoxLayout()
         groupbox.setLayout(layout)
         for val in value.position.list():
@@ -85,7 +88,7 @@ class EditWidget(QWidget):
             layout.addWidget(field)
         yield groupbox
 
-        groupbox = QGroupBox('Rotation')
+        groupbox = QGroupBox("Rotation")
         layout = QVBoxLayout()
         groupbox.setLayout(layout)
         for val in value.rotation.list():
@@ -93,7 +96,7 @@ class EditWidget(QWidget):
             layout.addWidget(field)
         yield groupbox
 
-        groupbox = QGroupBox('Scale')
+        groupbox = QGroupBox("Scale")
         layout = QVBoxLayout()
         groupbox.setLayout(layout)
         for val in value.scale.list():
@@ -101,7 +104,7 @@ class EditWidget(QWidget):
             layout.addWidget(field)
         yield groupbox
 
-        groupbox = QGroupBox('Layer')
+        groupbox = QGroupBox("Layer")
         layout = QVBoxLayout()
         groupbox.setLayout(layout)
         field = self.__widget_generic_textbox("", value.layer)[0]
@@ -109,13 +112,13 @@ class EditWidget(QWidget):
         yield groupbox
 
     def _widget_color(self, label, value):
-        for component in ('r', 'g', 'b', 'a'):
+        for component in ("r", "g", "b", "a"):
             val = getattr(value, component)
             widget = self.__widget_generic_textbox("", val)[0]
             yield widget
 
     def _widget_vector3(self, label, value):
-        labels = ('x', 'y', 'z')
+        labels = ("x", "y", "z")
         for label, val in zip(labels, value.list()):
             field = QLineEdit()
             field.setText(str(val))
@@ -154,10 +157,10 @@ class EditWidget(QWidget):
             value = ES2Transform()
             # print(layout.count())
             fields = (
-                ('position', ES2ValueType.vector3),
-                ('rotation', ES2ValueType.quaternion),
-                ('scale', ES2ValueType.vector3),
-                ('layer', ES2ValueType.string)
+                ("position", ES2ValueType.vector3),
+                ("rotation", ES2ValueType.quaternion),
+                ("scale", ES2ValueType.vector3),
+                ("layer", ES2ValueType.string),
             )
             for i, field in enumerate(fields):
                 group = layout.itemAt(i).widget()
@@ -193,7 +196,9 @@ class EditWidget(QWidget):
                 value = []
                 for i in range(self.get_widget_container().count()):
                     widget = self.get_widget_container().itemAt(i).widget()
-                    value.append(self._get_widget_result(widget, self.item.header.value_type))
+                    value.append(
+                        self._get_widget_result(widget, self.item.header.value_type)
+                    )
                 return value
         else:
             widget = self.get_widget_container().itemAt(0).widget()
