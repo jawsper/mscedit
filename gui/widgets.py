@@ -56,76 +56,78 @@ class EditWidget(QWidget):
             wrapper_layout.addWidget(widget)
         self.get_widget_container().addWidget(wrapper)
 
+    def _widget_bool(self, label, value):
+        widget = QCheckBox()
+        widget.setChecked(value)
+        widget.setText(label)
+        return [widget]
+
+    def __widget_generic_textbox(self, label, value):
+        widget = QLineEdit()
+        widget.setText(f"{value}")
+        return [widget]
+
+    def _widget_float(self, label, value):
+        return self.__widget_generic_textbox(label, value)
+
+    def _widget_int(self, label, value):
+        return self.__widget_generic_textbox(label, value)
+
+    def _widget_string(self, label, value):
+        return self.__widget_generic_textbox(label, value)
+
+    def _widget_transform(self, label, value):
+        groupbox = QGroupBox('Position')
+        layout = QVBoxLayout()
+        groupbox.setLayout(layout)
+        for val in value.position.list():
+            field = self.__widget_generic_textbox("", val)[0]
+            layout.addWidget(field)
+        yield groupbox
+
+        groupbox = QGroupBox('Rotation')
+        layout = QVBoxLayout()
+        groupbox.setLayout(layout)
+        for val in value.rotation.list():
+            field = self.__widget_generic_textbox("", val)[0]
+            layout.addWidget(field)
+        yield groupbox
+
+        groupbox = QGroupBox('Scale')
+        layout = QVBoxLayout()
+        groupbox.setLayout(layout)
+        for val in value.scale.list():
+            field = self.__widget_generic_textbox("", val)[0]
+            layout.addWidget(field)
+        yield groupbox
+
+        groupbox = QGroupBox('Layer')
+        layout = QVBoxLayout()
+        groupbox.setLayout(layout)
+        field = self.__widget_generic_textbox("", value.layer)[0]
+        layout.addWidget(field)
+        yield groupbox
+
+    def _widget_color(self, label, value):
+        for component in ('r', 'g', 'b', 'a'):
+            val = getattr(value, component)
+            widget = self.__widget_generic_textbox("", val)[0]
+            yield widget
+
+    def _widget_vector3(self, label, value):
+        labels = ('x', 'y', 'z')
+        for label, val in zip(labels, value.list()):
+            field = QLineEdit()
+            field.setText(str(val))
+            yield field
+
     def _make_edit_widgets(self, value_type, label, value):
         widgets = []
-        if value_type == ES2ValueType.bool:
-            widget = QCheckBox()
-            widget.setChecked(value)
-            widget.setText(label)
-            widgets.append(widget)
 
-        elif value_type == ES2ValueType.float:
-            widget = QLineEdit()
-            widget.setText('{}'.format(value))
-            widgets.append(widget)
-
-        elif value_type == ES2ValueType.int:
-            widget = QLineEdit()
-            widget.setText('{}'.format(value))
-            widgets.append(widget)
-
-        elif value_type == ES2ValueType.string:
-            widget = QLineEdit()
-            widget.setText(value)
-            widgets.append(widget)
-
-        elif value_type == ES2ValueType.transform:
-            groupbox = QGroupBox('Position')
-            layout = QVBoxLayout()
-            groupbox.setLayout(layout)
-            for val in value.position.list():
-                field = QLineEdit()
-                field.setText(str(val))
-                layout.addWidget(field)
-            widgets.append(groupbox)
-
-            groupbox = QGroupBox('Rotation')
-            layout = QVBoxLayout()
-            groupbox.setLayout(layout)
-            for val in value.rotation.list():
-                field = QLineEdit()
-                field.setText(str(val))
-                layout.addWidget(field)
-            widgets.append(groupbox)
-
-            groupbox = QGroupBox('Scale')
-            layout = QVBoxLayout()
-            groupbox.setLayout(layout)
-            for val in value.scale.list():
-                field = QLineEdit()
-                field.setText(str(val))
-                layout.addWidget(field)
-            widgets.append(groupbox)
-
-            groupbox = QGroupBox('Layer')
-            layout = QVBoxLayout()
-            groupbox.setLayout(layout)
-            field = QLineEdit()
-            field.setText(value.layer)
-            layout.addWidget(field)
-            widgets.append(groupbox)
-
-        elif value_type == ES2ValueType.color:
-            # groupbox = QGroupBox('Color')
-            # layout = QVBoxLayout()
-            # groupbox.setLayout(layout)
-            for component in ('r', 'g', 'b', 'a'):
-                val = getattr(value, component)
-                field = QLineEdit()
-                field.setText(str(val))
-                widgets.append(field)
-                # layout.addWidget(field)
-            # widgets.append(groupbox)
+        widget_factory = f"_widget_{ES2ValueType(value_type).name}"
+        if hasattr(self, widget_factory):
+            for widget in getattr(self, widget_factory)(label, value):
+                widgets.append(widget)
 
         return widgets
 
