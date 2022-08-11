@@ -1,5 +1,6 @@
 from collections import OrderedDict
 import struct
+from typing import Any, BinaryIO
 
 from .exceptions import ES2InvalidDataException
 from .enums import ES2Collection, ES2ValueType
@@ -17,15 +18,16 @@ from .types import (
 
 
 class ES2Reader:
-    def __init__(self, stream):
+    def __init__(self, stream: BinaryIO):
         self.stream = stream
         self.current_tag = ES2Tag("", 0, 0, 0)
 
     def next(self):
         self.stream.seek(self.current_tag.next_tag_position)
         self.current_tag.position = self.stream.tell()
-        b = self.read_byte()
-        if not b:
+        try:
+            b = self.read_byte()
+        except EOFError:
             return False
         if b != 126:  # '~'
             raise ES2InvalidDataException
@@ -83,16 +85,16 @@ class ES2Reader:
                 return num
         raise Exception("Format_Bad7BitInt32")
 
-    def read_int(self):
+    def read_int(self) -> int:
         return self.read("I")
 
-    def read_byte(self):
+    def read_byte(self) -> int:
         return self.read("B")
 
-    def read_float(self):
+    def read_float(self) -> float:
         return self.read("f")
 
-    def read_bool(self):
+    def read_bool(self) -> bool:
         return bool(self.read_byte())
 
     def read_color(self):
@@ -171,14 +173,15 @@ class ES2Reader:
         except AttributeError:
             raise NotImplementedError(f"Value type {value_type} not implemented")
 
-    def read(self, fmt):
-        try:
-            val = struct.unpack(fmt, self.stream.read(struct.calcsize(fmt)))
-            if len(val) == 1:
-                return val[0]
-            return val
-        except struct.error:
-            return None
+    def read(self, fmt) -> Any:
+        expected_size = struct.calcsize(fmt)
+        data = self.stream.read(expected_size)
+        if len(data) != expected_size:
+            raise EOFError(f"Not enough bytes read, {len(data)} read, expected {expected_size}")
+        val = struct.unpack(fmt, data)
+        if len(val) == 1:
+            return val[0]
+        return val
 
     def read_header(self):
         collection_type = ES2Collection.Null
