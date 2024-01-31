@@ -64,15 +64,15 @@ class ES2Reader:
         return data
 
     def read_string(self):
-        num2 = self.read_7bit_encoded_int()
-        if num2 < 0:
+        strlen = self.read_7bit_encoded_int()
+        if strlen < 0:
             raise Exception("Invalid string")
-        if num2 == 0:
+        if strlen == 0:
             return ""
-        if num2 > 127:
+        if strlen > 127:
             # todo: implement longer strings (is it even hard?)
             raise NotImplementedError("Long strings not supported yet")
-        return self.stream.read(num2).decode("ascii")
+        return self.stream.read(strlen).decode("ascii")
 
     def read_7bit_encoded_int(self):
         num = 0
@@ -127,7 +127,8 @@ class ES2Reader:
 
     def read_mesh(self):
         # print('-----read_mesh-----')
-        mesh_settings = MeshSettings(self.stream.read(self.read_byte()))
+        mesh_settings_len = self.read_byte()
+        mesh_settings = MeshSettings(self.stream.read(mesh_settings_len))
 
         mesh = Mesh()
         mesh.vertices = self._read_array(ES2ValueType.vector3)
@@ -137,7 +138,7 @@ class ES2Reader:
             for i in range(mesh.submesh_count):
                 mesh.set_triangles(self._read_array(ES2ValueType.int), i)
         if mesh_settings.save_skinning:
-            mesh.bindposes = self._read_array(ES2ValueType.matrix4x4)
+            mesh.bind_poses = self._read_array(ES2ValueType.matrix4x4)
             mesh.bone_weights = self._read_array(ES2ValueType.boneweight)
         if mesh_settings.save_normals:
             mesh.normals = self._read_array(ES2ValueType.vector3)
@@ -177,7 +178,9 @@ class ES2Reader:
         expected_size = struct.calcsize(fmt)
         data = self.stream.read(expected_size)
         if len(data) != expected_size:
-            raise EOFError(f"Not enough bytes read, {len(data)} read, expected {expected_size}")
+            raise EOFError(
+                f"Not enough bytes read, {len(data)} read, expected {expected_size}"
+            )
         val = struct.unpack(fmt, data)
         if len(val) == 1:
             return val[0]

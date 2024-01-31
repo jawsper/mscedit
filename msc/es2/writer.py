@@ -71,7 +71,7 @@ class ES2Writer:
             for i in range(param.submesh_count):
                 self._write_array(ES2ValueType.int, param.get_triangles(i))
         if param.settings.save_skinning:
-            self._write_array(ES2ValueType.matrix4x4, param.bindposes)
+            self._write_array(ES2ValueType.matrix4x4, param.bind_poses)
             self._write_array(ES2ValueType.boneweight, param.bone_weights)
         if param.settings.save_normals:
             self._write_array(ES2ValueType.vector3, param.normals)
