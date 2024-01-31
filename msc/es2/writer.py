@@ -1,30 +1,33 @@
 from collections import OrderedDict
 import struct
+from typing import Any, BinaryIO
+
+from msc.es2.types import ES2Color, ES2Field, ES2Transform, Mesh, Quaternion, Vector3
 
 from .enums import ES2Collection, ES2ValueType
 
 
 class ES2Writer:
-    def __init__(self, stream):
+    def __init__(self, stream: BinaryIO):
         self.stream = stream
         self.data = OrderedDict()
 
-    def write_bool(self, param):
+    def write_bool(self, param: bool):
         self.write("?", param)
 
-    def write_byte(self, param):
+    def write_byte(self, param: int):
         self.write("B", param)
 
-    def write_int(self, param):
+    def write_int(self, param: int):
         self.write_int32(param)
 
-    def write_int32(self, param):
+    def write_int32(self, param: int):
         self.write("I", param)
 
-    def write_float(self, param):
+    def write_float(self, param: float):
         self.write("f", param)
 
-    def write_str(self, param):
+    def write_str(self, param: str):
         self.write_string(param)
 
     def write_string(self, param):
@@ -34,13 +37,13 @@ class ES2Writer:
         self.write_7bit_encoded_int(len(param))
         self.write(param)
 
-    def write_7bit_encoded_int(self, param):
+    def write_7bit_encoded_int(self, param: int):
         self.write("B", param)
 
-    def write_color(self, param):
+    def write_color(self, param: ES2Color):
         self.write("ffff", *param.color)
 
-    def write_transform(self, param):
+    def write_transform(self, param: ES2Transform):
         # self.debug = True
         self.write_byte(4)
         self.write_vector3(param.position)
@@ -52,17 +55,18 @@ class ES2Writer:
     def write_vector2(self, param):
         self.write("ff", *param)
 
-    def write_vector3(self, param):
+    def write_vector3(self, param: Vector3):
         self.write("fff", *param.list())
 
     def write_vector4(self, param):
         self.write("ffff", *param)
 
-    def write_quaternion(self, param):
+    def write_quaternion(self, param: Quaternion):
         self.write("ffff", *param.list())
 
-    def write_mesh(self, param):
+    def write_mesh(self, param: Mesh):
         # self.debug = True
+        assert param.settings != None
         self.write(param.settings.get_bytes())
         self._write_array(ES2ValueType.vector3, param.vertices)
         self._write_array(ES2ValueType.int, param.triangles)
@@ -108,11 +112,11 @@ class ES2Writer:
         for item in param:
             self._write_type(value_type, item)
 
-    def _write_type(self, value_type, param):
+    def _write_type(self, value_type: ES2ValueType, param: Any):
         func_name = f"write_{value_type.name}"
         getattr(self, func_name)(param)
 
-    def _write_header(self, tag, collection_type, value_type, key_type):
+    def _write_header(self, tag: str, collection_type: ES2Collection, value_type: ES2ValueType, key_type: ES2ValueType):
         self.write_byte(126)
         self.write_string(tag)
         length_position = self.stream.tell()
@@ -140,11 +144,10 @@ class ES2Writer:
         self.data[key] = value
 
     def save_all(self):
+        field: ES2Field
         for k, field in self.data.items():
             header, value = field.header, field.value
-            self.debug = False
-            if "debug" in header.settings:
-                self.debug = header.settings["debug"]
+            self.debug = header.settings.debug
             if self.debug:
                 print(type(value).__name__, k)
 

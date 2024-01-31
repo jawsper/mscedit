@@ -6,6 +6,7 @@ from .exceptions import ES2InvalidDataException
 from .enums import ES2Collection, ES2ValueType
 from .types import (
     ES2Header,
+    ES2HeaderSettings,
     ES2Tag,
     ES2Field,
     ES2Color,
@@ -45,7 +46,7 @@ class ES2Reader:
         self.reset()
         while self.next():
             header = self.read_header()
-            if header.settings["encrypt"]:
+            if header.settings.encrypt:
                 raise NotImplementedError("Cannot deal with encryption sorry.")
             elif header.collection_type != ES2Collection.Null:
                 if header.collection_type == ES2Collection.List:
@@ -188,13 +189,13 @@ class ES2Reader:
 
     def read_header(self):
         collection_type = ES2Collection.Null
-        key_type = None
+        key_type = ES2ValueType.Null
         value_type = ES2ValueType.Null
-        settings = {"encrypt": False, "debug": False}
+        settings = ES2HeaderSettings(encrypt=False, debug=False)
         while True:
             b = self.read_byte()
             if b == 127:
-                settings["encrypt"] = True
+                settings.encrypt = True
             elif b != 123:
                 if b == 255:
                     break

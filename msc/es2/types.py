@@ -1,8 +1,31 @@
 import struct
+from typing import Any
+
+from msc.es2.enums import ES2Collection, ES2ValueType
+
+
+class ES2HeaderSettings:
+    encrypt: bool
+    debug: bool
+
+    def __init__(self, encrypt: bool=False, debug: bool=False):
+        self.encrypt = encrypt
+        self.debug = debug
 
 
 class ES2Header:
-    def __init__(self, collection_type, key_type, value_type, settings):
+    collection_type: ES2Collection
+    key_type: ES2ValueType
+    value_type: ES2ValueType
+    settings: ES2HeaderSettings
+
+    def __init__(
+        self,
+        collection_type: ES2Collection,
+        key_type: ES2ValueType,
+        value_type: ES2ValueType,
+        settings: ES2HeaderSettings,
+    ):
         self.collection_type = collection_type
         self.key_type = key_type
         self.value_type = value_type
@@ -13,28 +36,36 @@ class ES2Header:
 
 
 class ES2Tag:
+    position: int | None
+    settings_position: int | None
+    next_tag_position: int | None
+
     def __init__(
-        self, tag=None, position=None, settings_position=None, next_tag_position=None
+        self,
+        tag=None,
+        position: int | None = None,
+        settings_position: int | None = None,
+        next_tag_position: int | None = None,
     ):
         if tag is None:
             self.tag = None
             self.position = 0
             self.settings_position = 0
             self.next_tag_position = 0
-            self.is_null = True
         else:
             self.tag = tag
             self.position = position
             self.settings_position = settings_position
             self.next_tag_position = next_tag_position
-            self.is_null = False
 
     def __repr__(self):
         return f"ES2Tag({self.tag}, {self.position}, {self.settings_position}, {self.next_tag_position})"
 
 
 class ES2Color:
-    def __init__(self, r, g, b, a):
+    color: tuple[float, float, float, float]
+
+    def __init__(self, r: float, g: float, b: float, a: float):
         self.color = (r, g, b, a)
         self.r, self.g, self.b, self.a = r, g, b, a
 
@@ -46,6 +77,11 @@ class ES2Color:
 
 
 class ES2Transform:
+    position: 'Vector3'
+    rotation: 'Quaternion'
+    scale: 'Vector3'
+    layer: str
+
     def __init__(self):
         self.position = Vector3()
         self.rotation = Quaternion()
@@ -57,13 +93,16 @@ class ES2Transform:
 
 
 class ES2Field:
-    def __init__(self, header, value):
+    header: ES2Header
+    value: Any
+
+    def __init__(self, header: ES2Header, value: Any):
         self.header = header
         self.value = value
 
 
 class MeshSettings:
-    def __init__(self, data):
+    def __init__(self, data: bytes):
         self.raw = data
         self.save_normals = False
         self.save_uv = False
@@ -130,7 +169,7 @@ class Mesh:
 
         self.colors32 = []
 
-        self.settings = None
+        self.settings: MeshSettings | None = None
 
     def set_triangles(self, data, submesh_id):
         self.submeshes[submesh_id] = data
