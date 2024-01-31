@@ -1,7 +1,10 @@
 import os
 import shutil
+from functools import cache
 from itertools import cycle
 import re
+
+from tabulate import tabulate
 
 from PyQt5.QtCore import Qt, QSortFilterProxyModel, QPoint, pyqtSignal
 from PyQt5.QtWidgets import QMainWindow, qApp, QFileDialog, QDialog, QSizePolicy
@@ -34,6 +37,7 @@ class MapViewDialog(QDialog):
         self.model = model
 
         self.ui = loadUi("gui/MapViewDialog.ui", self)
+        assert self.ui
         self.ui.addItemButton.clicked.connect(self.button_add_clicked)
         self.ui.clearButton.clicked.connect(self.button_clear_clicked)
 
@@ -113,6 +117,7 @@ class MainWindow(QMainWindow):
         self.open_file_dir = os.path.expanduser("~")
 
         self.ui = loadUi("gui/MainWindow.ui", self)
+        assert self.ui
 
         self.ui.action_Open.triggered.connect(self.menu_open)
         self.ui.action_Save.triggered.connect(self.menu_save)
@@ -155,6 +160,8 @@ class MainWindow(QMainWindow):
         self.ui.action_Save.setEnabled(self.data_changed)
 
     def menu_save(self):
+        assert self.filename
+        assert self.file_data
         for i in range(100):
             backup_filename = f"{self.filename}.{i}"
             if not os.path.exists(backup_filename):
@@ -172,6 +179,7 @@ class MainWindow(QMainWindow):
         self.set_changed(False)
 
     def menu_close(self):
+        assert self.ui
         self.ui.action_Save.setEnabled(False)
         self.ui.action_Close.setEnabled(False)
         self.filename = None
@@ -179,6 +187,7 @@ class MainWindow(QMainWindow):
         self.update_tree(None)
 
     def update_tree(self, file_data=None):
+        assert self.ui
         self.datamodel.setSourceModel(TreeModel(file_data))
         self.ui.treeView.sortByColumn(0, Qt.AscendingOrder)
         self.ui.treeView.resizeColumnToContents(0)
@@ -194,10 +203,13 @@ class MainWindow(QMainWindow):
         #     print(self.file_data[item].value)
 
     def treeView_doubleClicked(self):
+        assert self.ui
         index = self.ui.treeView.selectionModel().selection().indexes()[0]
         self.edit_index(index)
 
     def edit_index(self, index):
+        assert self.ui
+        assert self.file_data
         tag = index.data()
         dialog = EditDialog(tag, self.file_data[tag], self)
         result = dialog.exec_()
@@ -223,11 +235,20 @@ class MainWindow(QMainWindow):
 
 
 class BoltablePart:
-    def __init__(self, name, model, **tags):
+    name: str
+    bolted: bool
+
+    def __init__(self, *, name: str, bolted, bolts, tightness, installed):
         self.name = name
-        for value_name, tag_name in tags.items():
-            value = model[tag_name].value
-            setattr(self, value_name, value)
+        self.bolted = bolted  # type: ignore
+        self.bolts = bolts
+        self.tightness = tightness
+        self.installed = installed
+
+    def to_dict(self):
+        return {
+            k: getattr(self, k) for k in ["name", "bolted", "bolts", "tightness", "installed"]
+        }
 
 
 class BoltCheckerDialog(QDialog):
@@ -244,102 +265,141 @@ class BoltCheckerDialog(QDialog):
 
         # from PyQt5.QtWidgets import QTreeWidgetItem
 
-        self.table = []
-        for part in self.boltable_parts:
-            pass
-            # print(part.name, part.bolted)
+        # self.table = []
+        # for part in self.boltable_parts:
+        #     self.table.append(part.to_dict())
 
         # from tabulate import tabulate
-        # print(tabulate(sorted(self.table, key=lambda x: x[1])))
+        # print(tabulate(sorted(self.table, key=lambda p: p["bolted"]), headers="keys"))
         self.check_bolts()
 
-    def get_tag_bolted(self, part):
-        tag_name = None
-        if part.startswith("Gauge"):
-            part = part[5:] + " " + part[:5]
-        elif part == "SteeringWheel":
-            part = "stock steering wheel"
-        elif part == "SportWheel":
-            part = "sport steering wheel"
-        elif part == "Rally Wheel":
-            part = "rally steering wheel"
-        elif part.startswith("CrankBearing"):
-            part = "main bearing" + part[-1]
-        elif part.startswith("Sparkplug"):
-            part = "spark plug(clone)" + part[-1]
-        elif part == "Valvecover":
-            part = "rocker cover"
-        elif part == "Crankwheel":
-            part = "crankshaft pulley"
-        elif part.startswith("Shock_"):
-            position = re.sub(r"^.+_(.+)$", r"\1", part).lower()
-            if position in ["rl", "rr"]:
-                part = f"shock absorber({position}xxx)"
-            else:
-                part = f"strut {position}(xxxxx)"
-        elif part.startswith("Discbrake"):
-            position = re.sub(r"^.+_(.+)$", r"\1", part).lower()
-            part = f"discbrake({position}xxx)"
-        elif part.startswith("Wishbone"):
-            part = f"IK_{part}"
-        elif part.startswith("Headlight"):
-            position = re.sub(r"^Headlight(.+)$", r"\1", part).lower()
-            part = f"headlight({position}{(5 - len(position)) * 'x'})"
+    def get_part_alternate_names(self, part: str):
+        part_names: list[str] = []
+        match part:
+            # engine bay parts
+            case "Valvecover":
+                part_names = ["rocker cover"]
+            case "ValvecoverGT":
+                part_names = ["rocker cover gt"]
+            case "Crankwheel":
+                part_names = ["crankshaft pulley"]
+            case "WiringBatteryPlus":
+                part_names = ["battery_terminal_plus"]
+            case "WiringBatteryMinus":
+                part_names = ["battery_terminal_minus"]
+            
+            # interior parts
+            case "SteeringWheel":
+                part_names = ["stock steering wheel"]
+            case "SportWheel":
+                part_names = ["sport steering wheel"]
+            case "Rally Wheel":
+                part_names = ["rally steering wheel"]
+            case "SteeringWheelGT":
+                part_names = ["gt steering wheel"]
+            case "Extinguisher Holder":
+                part_names = ["fire extinguisher holder"]
 
-        for tag in self.model:
-            if not tag.endswith("Bolted"):
-                continue
-            tag_name = tag[:-6]  # strip "Bolted"
-            tag_name = tag_name.replace(" ", "").replace("_", "").lower()
-            part_name = part.replace(" ", "").replace("_", "").lower()
-            # tag_name = re.sub(r'\(.+\)', '', tag_name)  # strip "(Clone)"
-            if tag_name == part_name:
-                return tag
-            if tag_name.replace("(clone)", "") == part_name:
-                return tag
-            if tag_name.replace("(xxxxx)", "") == part_name:
-                return tag
-            # if tag.replace('_', '').replace(' ', '').lower().startswith(part.replace('_', '').replace(' ','').lower()):
-            #     self.table.append([tag_name, part_name])
-            #     return tag
+            case _:
+                if part.startswith("Gauge"):
+                    part_names =  [f"{part[5:]} {part[:5]}"]
+                elif part.startswith("CrankBearing"):
+                    part_names =  [f"main bearing{part[-1]}"]
+                elif part.startswith("Sparkplug"):
+                    part_names =  [f"spark plug(clone){part[-1]}"]
+                elif part.startswith("Shock_"):
+                    position = part.split("_")[1].lower()
+                    if position in ["rl", "rr"]:
+                        part_names =  [f"shock absorber({position}xxx)"]
+                    else:
+                        part_names =  [f"strut {position}(xxxxx)"]
+                elif part.startswith("Discbrake"):
+                    position = part.split("_")[1].lower()
+                    part_names =  [f"discbrake({position}xxx)"]
+                elif part.startswith("Wishbone"):
+                    part_names =  [f"IK_{part}"]
+                elif part.startswith("Headlight"):
+                    position = re.sub(r"^headlight(.+)[12]$", r"\1", part.lower())
+                    part_names =  [f"headlight {position}"]
 
-    def get_tag_bolts(self, part):
-        return part + "Bolts"
+        part_names.insert(0, part)
+        suffixes = ["(clone)", "(xxxxx)"]
+        for suffix in suffixes:
+            for part in part_names[:]:
+                if suffix in part.lower():
+                    continue
+                part_names.append(f"{part}{suffix}")
+                if "_" in part or " " in part:
+                    part_names.append(f"{part.replace('_', '').replace(' ', '')}{suffix}")
 
-    def get_tag_tightness(self, part):
-        return part + "Tightness"
+        return part_names
+    
+    @cache
+    def get_model_keys_with_suffix(self, suffix: str):
+        return sorted([
+            key for key in self.model if key.endswith(suffix)
+        ])
+    
+    def find_model_parts(self, part_names: list[str], suffix: str):
+        part_names = [n.lower() for n in part_names]
+        keys = self.get_model_keys_with_suffix(suffix)
+        for key in keys:
+            k = key.removesuffix(suffix).lower()
+            if k in part_names:
+                return key
+            if k.replace("_", "").replace(" ", "") in part_names:
+                return key
+
+    def find_part_bolted(self, part_names: list[str]):
+        return self.find_model_parts(part_names, "Bolted")
+
+    def find_part_bolts(self, part_names: list[str]):
+        return self.find_model_parts(part_names, "Bolts")
+
+    def find_part_tightness(self, part_names: list[str]):
+        return self.find_model_parts(part_names, "Tightness")
+
+    def find_part_installed(self, part_names: list[str]):
+        return self.find_model_parts(part_names, "Installed")
 
     def parts_name(self, part):
         if part.startswith("Gauge"):
             part = f"{part[5:]} {part[:5]}"
         return f"{part.lower().replace('_', ' ')}(Clone)"
 
-    def bolts_name(self, part):
-        return part
-
     def find_boltables(self):
-        self.boltable_parts = []
+        self.boltable_parts: list[BoltablePart] = []
+        not_found = []
         for tag in self.model.keys():
             if tag.endswith("Bolts"):
                 part_name = tag[:-5]
-                tag_bolted = self.get_tag_bolted(part_name)
-                tag_bolts = self.get_tag_bolts(part_name)
-                tag_tightness = self.get_tag_tightness(part_name)
-                if (
-                    tag_bolted in self.model
-                    and tag_bolts in self.model
-                    and tag_tightness in self.model
-                ):
+                part_names = self.get_part_alternate_names(part_name)
+                tag_bolted = self.find_part_bolted(part_names)
+                tag_bolts = self.find_part_bolts(part_names)
+                tag_tightness = self.find_part_tightness(part_names)
+                tag_installed = self.find_part_installed(part_names)
+                if tag_bolted and tag_bolts and tag_tightness and tag_installed:
                     part = BoltablePart(
-                        part_name,
-                        self.model,
-                        bolted=tag_bolted,
-                        bolts=tag_bolts,
-                        tightness=tag_tightness,
+                        name=part_name,
+                        bolted=self.model[tag_bolted].value,
+                        bolts=self.model[tag_bolts].value,
+                        tightness=self.model[tag_tightness].value,
+                        installed=self.model[tag_installed].value,
                     )
                     self.boltable_parts.append(part)
                 else:
-                    print(part_name)
+                    not_found.append({
+                        "name": part_name,
+                        # "names": part_names,
+                        "bolted": tag_bolted,
+                        "bolts": tag_bolts,
+                        "tightness": tag_tightness,
+                        "installed": tag_installed,
+                    })
+
+        self.boltable_parts = sorted(self.boltable_parts, key=lambda part: part.name)
+
+        print(tabulate(not_found, headers="keys"))
 
     def check_bolts(self):
         pass
