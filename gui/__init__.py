@@ -247,7 +247,8 @@ class BoltablePart:
 
     def to_dict(self):
         return {
-            k: getattr(self, k) for k in ["name", "bolted", "bolts", "tightness", "installed"]
+            k: getattr(self, k)
+            for k in ["name", "bolted", "bolts", "tightness", "installed"]
         }
 
 
@@ -287,7 +288,7 @@ class BoltCheckerDialog(QDialog):
                 part_names = ["battery_terminal_plus"]
             case "WiringBatteryMinus":
                 part_names = ["battery_terminal_minus"]
-            
+
             # interior parts
             case "SteeringWheel":
                 part_names = ["stock steering wheel"]
@@ -302,25 +303,25 @@ class BoltCheckerDialog(QDialog):
 
             case _:
                 if part.startswith("Gauge"):
-                    part_names =  [f"{part[5:]} {part[:5]}"]
+                    part_names = [f"{part[5:]} {part[:5]}"]
                 elif part.startswith("CrankBearing"):
-                    part_names =  [f"main bearing{part[-1]}"]
+                    part_names = [f"main bearing{part[-1]}"]
                 elif part.startswith("Sparkplug"):
-                    part_names =  [f"spark plug(clone){part[-1]}"]
+                    part_names = [f"spark plug(clone){part[-1]}"]
                 elif part.startswith("Shock_"):
                     position = part.split("_")[1].lower()
                     if position in ["rl", "rr"]:
-                        part_names =  [f"shock absorber({position}xxx)"]
+                        part_names = [f"shock absorber({position}xxx)"]
                     else:
-                        part_names =  [f"strut {position}(xxxxx)"]
+                        part_names = [f"strut {position}(xxxxx)"]
                 elif part.startswith("Discbrake"):
                     position = part.split("_")[1].lower()
-                    part_names =  [f"discbrake({position}xxx)"]
+                    part_names = [f"discbrake({position}xxx)"]
                 elif part.startswith("Wishbone"):
-                    part_names =  [f"IK_{part}"]
+                    part_names = [f"IK_{part}"]
                 elif part.startswith("Headlight"):
                     position = re.sub(r"^headlight(.+)[12]$", r"\1", part.lower())
-                    part_names =  [f"headlight {position}"]
+                    part_names = [f"headlight {position}"]
 
         part_names.insert(0, part)
         suffixes = ["(clone)", "(xxxxx)"]
@@ -330,16 +331,16 @@ class BoltCheckerDialog(QDialog):
                     continue
                 part_names.append(f"{part}{suffix}")
                 if "_" in part or " " in part:
-                    part_names.append(f"{part.replace('_', '').replace(' ', '')}{suffix}")
+                    part_names.append(
+                        f"{part.replace('_', '').replace(' ', '')}{suffix}"
+                    )
 
         return part_names
-    
+
     @cache
     def get_model_keys_with_suffix(self, suffix: str):
-        return sorted([
-            key for key in self.model if key.endswith(suffix)
-        ])
-    
+        return sorted([key for key in self.model if key.endswith(suffix)])
+
     def find_model_parts(self, part_names: list[str], suffix: str):
         part_names = [n.lower() for n in part_names]
         keys = self.get_model_keys_with_suffix(suffix)
@@ -388,14 +389,16 @@ class BoltCheckerDialog(QDialog):
                     )
                     self.boltable_parts.append(part)
                 else:
-                    not_found.append({
-                        "name": part_name,
-                        # "names": part_names,
-                        "bolted": tag_bolted,
-                        "bolts": tag_bolts,
-                        "tightness": tag_tightness,
-                        "installed": tag_installed,
-                    })
+                    not_found.append(
+                        {
+                            "name": part_name,
+                            # "names": part_names,
+                            "bolted": tag_bolted,
+                            "bolts": tag_bolts,
+                            "tightness": tag_tightness,
+                            "installed": tag_installed,
+                        }
+                    )
 
         self.boltable_parts = sorted(self.boltable_parts, key=lambda part: part.name)
 

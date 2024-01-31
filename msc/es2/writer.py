@@ -116,7 +116,13 @@ class ES2Writer:
         func_name = f"write_{value_type.name}"
         getattr(self, func_name)(param)
 
-    def _write_header(self, tag: str, collection_type: ES2Collection, value_type: ES2ValueType, key_type: ES2ValueType):
+    def _write_header(
+        self,
+        tag: str,
+        collection_type: ES2Collection,
+        value_type: ES2ValueType,
+        key_type: ES2ValueType,
+    ):
         self.write_byte(126)
         self.write_string(tag)
         length_position = self.stream.tell()

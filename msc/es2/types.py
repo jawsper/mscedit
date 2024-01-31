@@ -8,7 +8,7 @@ class ES2HeaderSettings:
     encrypt: bool
     debug: bool
 
-    def __init__(self, encrypt: bool=False, debug: bool=False):
+    def __init__(self, encrypt: bool = False, debug: bool = False):
         self.encrypt = encrypt
         self.debug = debug
 
@@ -77,9 +77,9 @@ class ES2Color:
 
 
 class ES2Transform:
-    position: 'Vector3'
-    rotation: 'Quaternion'
-    scale: 'Vector3'
+    position: "Vector3"
+    rotation: "Quaternion"
+    scale: "Vector3"
     layer: str
 
     def __init__(self):
