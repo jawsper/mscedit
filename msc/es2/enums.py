@@ -25,6 +25,7 @@ class ES2ValueType(IntEnum):
     int = 3802662998
     string = 4259967470
     mesh = 2420697311
+    byte = 916439771
     quaternion = 121  # TODO: find actual hash!
     vector2 = 122  # TODO: find actual hash!
     vector3 = 0xEC66DC46
