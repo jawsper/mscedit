@@ -1,3 +1,6 @@
+import logging
+from typing import Any
+
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import (
     QWidget,
@@ -10,7 +13,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.uic import loadUi
 
 from msc.es2 import ES2Collection, ES2ValueType
-from msc.es2.types import ES2Transform, ES2Color, Vector3, Quaternion
+from msc.es2.types import ES2Field, ES2Transform, ES2Color, Vector3, Quaternion
 
 
 class ClickableLabel(QLabel):
@@ -21,6 +24,9 @@ class ClickableLabel(QLabel):
 
 
 class EditWidget(QWidget):
+    tag: str
+    item: ES2Field
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.ui = loadUi("gui/EditWidget.ui", self)
@@ -28,33 +34,40 @@ class EditWidget(QWidget):
         self.tag = None
         self.item = None
 
-    def set_tag(self, tag):
+    def set_tag(self, tag: str):
         self.tag = tag
         self.ui.label.setText(self.tag)
 
-    def set_item(self, item):
+    def set_item(self, item: ES2Field):
         self.item = item
         self.add_edit_widgets()
 
     def add_edit_widgets(self):
-        if self.item.header.collection_type != ES2Collection.Null:
-            if self.item.header.collection_type == ES2Collection.List:
+        match self.item.header.collection_type:
+            case ES2Collection.List:
                 for item in self.item.value:
                     self._add_edit_widgets_to_layout(
                         self.item.header.value_type, "", item
                     )
-        else:
-            self._add_edit_widgets_to_layout(
-                self.item.header.value_type, self.tag, self.item.value
-            )
+            case ES2Collection.Dictionary:
+                for key, value in self.item.value.items():
+                    self._add_edit_widgets_to_layout(
+                        self.item.header.value_type, key, value, is_dict=True
+                    )
+            case ES2Collection.Null:
+                self._add_edit_widgets_to_layout(
+                    self.item.header.value_type, self.tag, self.item.value
+                )
+            case _:
+                logging.warn(f"Cannot render widgets for {self.item.header.collection_type}")
         self.get_widget_container().setAlignment(Qt.AlignTop)
 
-    def _add_edit_widgets_to_layout(self, value_type, label, value):
+    def _add_edit_widgets_to_layout(self, value_type: ES2ValueType, label, value, *, is_dict: bool = False):
         wrapper = QWidget()
         wrapper.show()
         wrapper_layout = QVBoxLayout()
         wrapper.setLayout(wrapper_layout)
-        for widget in self._make_edit_widgets(value_type, label, value):
+        for widget in self._make_edit_widgets(value_type, label, value, is_dict=is_dict):
             widget.show()
             wrapper_layout.addWidget(widget)
         self.get_widget_container().addWidget(wrapper)
@@ -124,22 +137,34 @@ class EditWidget(QWidget):
             field.setText(str(val))
             yield field
 
-    def _make_edit_widgets(self, value_type, label, value):
+    def _make_edit_widgets(self, value_type: ES2ValueType, label, value, *, is_dict: bool = False):
         widgets = []
 
-        widget_factory = f"_widget_{ES2ValueType(value_type).name}"
+        widget_factory = f"_widget_{value_type.name}"
         if hasattr(self, widget_factory):
             for widget in getattr(self, widget_factory)(label, value):
-                widgets.append(widget)
+                if is_dict:
+                    groupbox = QGroupBox(label)
+                    layout = QVBoxLayout()
+                    groupbox.setLayout(layout)
+                    layout.addWidget(widget)
+                    widgets.append(groupbox)
+                else:
+                    widgets.append(widget)
 
         return widgets
 
-    def _get_widget_result(self, wrapper, value_type):
+    def _get_widget_result(self, wrapper, value_type, *, is_dict: bool = False):
         layout = wrapper.layout()
         if layout:
             widget = layout.itemAt(0).widget()
         else:
             widget = wrapper
+        
+        if is_dict:
+            key = widget.title()
+            value = self._get_widget_result(widget, value_type)
+            return key, value
 
         if value_type == ES2ValueType.bool:
             return widget.isChecked()
@@ -191,8 +216,8 @@ class EditWidget(QWidget):
             return ES2Color(*values)
 
     def get_value(self):
-        if self.item.header.collection_type != ES2Collection.Null:
-            if self.item.header.collection_type == ES2Collection.List:
+        match self.item.header.collection_type:
+            case ES2Collection.List:
                 value = []
                 for i in range(self.get_widget_container().count()):
                     widget = self.get_widget_container().itemAt(i).widget()
@@ -200,9 +225,21 @@ class EditWidget(QWidget):
                         self._get_widget_result(widget, self.item.header.value_type)
                     )
                 return value
-        else:
-            widget = self.get_widget_container().itemAt(0).widget()
-            return self._get_widget_result(widget, self.item.header.value_type)
+            case ES2Collection.Dictionary:
+                value = {}
+                for i in range(self.get_widget_container().count()):
+                    widget = self.get_widget_container().itemAt(i).widget()
+                    k, v = self._get_widget_result(
+                        widget, self.item.header.value_type, is_dict=True,
+                    )
+                    value[k] = v
+                return value
+            case ES2Collection.Null:
+                widget = self.get_widget_container().itemAt(0).widget()
+                return self._get_widget_result(widget, self.item.header.value_type)
+            case _:
+                logging.warn(f"Cannot get value for {self.item.header.collection_type}")
+        logging.warn("No value was returned.")
 
     def get_widget_container(self):
         return self.ui.editWidgetsContainer.layout()
