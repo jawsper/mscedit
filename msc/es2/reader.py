@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import struct
 from typing import Any, BinaryIO
+import logging
 
 from .exceptions import ES2InvalidDataException
 from .enums import ES2Collection, ES2ValueType
@@ -41,23 +42,35 @@ class ES2Reader:
         self.stream.seek(0)
         self.current_tag = ES2Tag()
 
-    def read_all(self):
+    def read_all(self) -> OrderedDict[str, ES2Field]:
         data = OrderedDict()
         self.reset()
         while self.next():
             header = self.read_header()
             if header.settings.encrypt:
                 raise NotImplementedError("Cannot deal with encryption sorry.")
-            elif header.collection_type != ES2Collection.Null:
-                if header.collection_type == ES2Collection.List:
+            match header.collection_type:
+                case ES2Collection.List:
                     self.read_byte()
                     num = self.read_int()
                     val = []
                     for i in range(num):
                         val.append(self._read_type(header.value_type))
                     data[self.current_tag.tag] = val
-            else:
-                data[self.current_tag.tag] = self._read_type(header.value_type)
+                case ES2Collection.Dictionary:
+                    self.read_byte()
+                    self.read_byte()
+                    val = {}
+                    num = self.read_int()
+                    for i in range(num):
+                        k = self._read_type(header.key_type)
+                        v = self._read_type(header.value_type)
+                        val[k] = v
+                    data[self.current_tag.tag] = val
+                case ES2Collection.Null:
+                    data[self.current_tag.tag] = self._read_type(header.value_type)
+                case _:
+                    logging.warn(f"Failed to read header collection type {header.collection_type}")
 
             data[self.current_tag.tag] = ES2Field(
                 header, data.get(self.current_tag.tag, None)
@@ -196,20 +209,26 @@ class ES2Reader:
             b = self.read_byte()
             if b == 127:
                 settings.encrypt = True
-            elif b != 123:
-                if b == 255:
-                    break
-                if b < 81:
-                    if collection_type == ES2Collection.Dictionary:
-                        pass
-                        # key_type = hash???
-                    else:
-                        pass
-                        # value_type = hash???
-                    raise NotImplementedError("Dictionary not implemented")
-                    return ES2Header(collection_type, key_type, value_type, settings)
-                if b >= 101:
-                    raise ES2InvalidDataException
+            elif b == 123:
+                continue
+            elif b == 255:
+                if collection_type == ES2Collection.Dictionary:
+                    key_type = ES2ValueType(self.read_int())
+                else:
+                    value_type = ES2ValueType(self.read_int())
+                return ES2Header(collection_type, key_type, value_type, settings)
+            elif b < 81:
+                if collection_type == ES2Collection.Dictionary:
+                    pass
+                    # key_type = hash???
+                else:
+                    pass
+                    # value_type = hash???
+                raise NotImplementedError("Get type from key not implemented")
+                return ES2Header(collection_type, key_type, value_type, settings)
+            elif b >= 101:
+                break
+            else:
                 collection_type = ES2Collection(b)
                 if collection_type == ES2Collection.Dictionary:
                     b2 = self.read_byte()
@@ -220,8 +239,5 @@ class ES2Reader:
                             collection_type, key_type, value_type, settings
                         )
                     # value_type = hash???
-        if collection_type == ES2Collection.Dictionary:
-            key_type = ES2ValueType(self.read_int())
-        else:
-            value_type = ES2ValueType(self.read_int())
-        return ES2Header(collection_type, key_type, value_type, settings)
+                    raise NotImplemented("Get type from key not implemented")
+        raise ES2InvalidDataException
