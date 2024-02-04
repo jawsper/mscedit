@@ -107,6 +107,14 @@ class ES2Writer:
         for item in param:
             self._write_type(value_type, item)
 
+    def _write_dict(self, key_type: ES2ValueType, value_type: ES2ValueType, param: dict):
+        self.write_byte(0)
+        self.write_byte(0)
+        self.write_int32(len(param))
+        for k, v in param.items():
+            self._write_type(key_type, k)
+            self._write_type(value_type, v)
+
     def _write_type(self, value_type: ES2ValueType, param: Any):
         func_name = f"write_{value_type.name}"
         getattr(self, func_name)(param)
@@ -159,15 +167,16 @@ class ES2Writer:
                 k, collection_type, value_type, key_type
             )
 
-            if collection_type == ES2Collection.List:
-                self._write_list(header.value_type, value)
-            else:
-                func_name = f"write_{value_type.name}"  # type(value).__name__
-                if hasattr(self, func_name):
-                    getattr(self, func_name)(value)
-                else:
+            match collection_type:
+                case ES2Collection.List:
+                    self._write_list(header.value_type, value)
+                case ES2Collection.Dictionary:
+                    self._write_dict(header.key_type, header.value_type, value)
+                case ES2Collection.Null:
+                    self._write_type(value_type, value)
+                case _:
                     print(k)
-                    raise NotImplementedError(f"Function not implemented: {func_name}")
+                    raise NotImplementedError(f"Collection type not implemented: {collection_type.name}")
 
             self._write_terminator()
             self._write_length(length_position)
