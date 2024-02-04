@@ -21,7 +21,7 @@ from .types import (
 class ES2Reader:
     def __init__(self, stream: BinaryIO):
         self.stream = stream
-        self.current_tag = ES2Tag("", 0, 0, 0)
+        self.current_tag = ES2Tag()
 
     def next(self):
         self.stream.seek(self.current_tag.next_tag_position)

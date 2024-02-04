@@ -36,27 +36,22 @@ class ES2Header:
 
 
 class ES2Tag:
-    position: int | None
-    settings_position: int | None
-    next_tag_position: int | None
+    tag: str
+    position: int
+    settings_position: int
+    next_tag_position: int
 
     def __init__(
         self,
-        tag=None,
-        position: int | None = None,
-        settings_position: int | None = None,
-        next_tag_position: int | None = None,
+        tag: str = "",
+        position: int = 0,
+        settings_position: int = 0,
+        next_tag_position: int = 0,
     ):
-        if tag is None:
-            self.tag = None
-            self.position = 0
-            self.settings_position = 0
-            self.next_tag_position = 0
-        else:
-            self.tag = tag
-            self.position = position
-            self.settings_position = settings_position
-            self.next_tag_position = next_tag_position
+        self.tag = tag
+        self.position = position
+        self.settings_position = settings_position
+        self.next_tag_position = next_tag_position
 
     def __repr__(self):
         return f"ES2Tag({self.tag}, {self.position}, {self.settings_position}, {self.next_tag_position})"
