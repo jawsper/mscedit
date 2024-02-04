@@ -1,9 +1,16 @@
+from typing import Any
+
 from PyQt5.QtWidgets import QDialog
 from PyQt5.uic import loadUi
 
+from msc.es2.types import ES2Field
+
 
 class EditDialog(QDialog):
-    def __init__(self, tag, item, parent=None):
+    tag: str
+    item: Any
+
+    def __init__(self, tag: str, item: ES2Field, parent=None):
         super().__init__(parent)
 
         self.tag = tag
