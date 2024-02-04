@@ -1,10 +1,14 @@
 #!/usr/bin/python3
 
+import logging
 import sys
 
 from PyQt5.QtWidgets import QApplication
 
 from gui import MainWindow
+
+
+logging.basicConfig()
 
 
 if __name__ == "__main__":
