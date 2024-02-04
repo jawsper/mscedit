@@ -44,13 +44,11 @@ class ES2Writer:
         self.write("ffff", *param.color)
 
     def write_transform(self, param: ES2Transform):
-        # self.debug = True
         self.write_byte(4)
         self.write_vector3(param.position)
         self.write_quaternion(param.rotation)
         self.write_vector3(param.scale)
         self.write_string(param.layer)
-        # self.debug = False
 
     def write_vector2(self, param):
         self.write("ff", *param)
@@ -65,7 +63,6 @@ class ES2Writer:
         self.write("ffff", *param.list())
 
     def write_mesh(self, param: Mesh):
-        # self.debug = True
         assert param.settings != None
         self.write(param.settings.get_bytes())
         self._write_array(ES2ValueType.vector3, param.vertices)
@@ -87,8 +84,6 @@ class ES2Writer:
             self._write_array(ES2ValueType.vector4, param.tangents)
         if param.settings.save_colors:
             self._write_array(ES2ValueType.color, param.colors32)
-
-        # self.debug = False
 
     def write(self, fmt, *param):
         if len(param) == 0:
@@ -131,9 +126,9 @@ class ES2Writer:
         if collection_type != ES2Collection.Null:
             self.write_byte(collection_type.value)
         self.write_byte(255)
-        self.write_int32(value_type)
-        if key_type is not None:
-            self.write_int32(key_type)
+        self.write_int32(value_type.value)
+        if key_type is not None and key_type != ES2ValueType.Null:
+            self.write_int32(key_type.value)
 
         return length_position
 
