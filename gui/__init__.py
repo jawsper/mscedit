@@ -1,5 +1,6 @@
 import os
 import shutil
+import tempfile
 
 from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtWidgets import QMainWindow, qApp, QFileDialog, QDialog
@@ -74,11 +75,13 @@ class MainWindow(QMainWindow):
         else:
             raise Exception("Too many backups!")
 
-        with open(self.filename, "wb") as f:
+        with tempfile.NamedTemporaryFile("wb") as f:
             writer = ES2Writer(f)
             for k, v in self.file_data.items():
                 writer.save(k, v)
             writer.save_all()
+
+            shutil.copy2(f.name, self.filename)
 
         self.set_changed(False)
 
