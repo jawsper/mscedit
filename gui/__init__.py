@@ -1,17 +1,21 @@
 import os
 import shutil
 import tempfile
+from typing import cast
 
 from PyQt5.QtCore import Qt, QSortFilterProxyModel
 from PyQt5.QtWidgets import QMainWindow, qApp, QFileDialog, QDialog
 from PyQt5.uic import loadUi
 
 from msc.es2 import ES2Reader, ES2Writer
+from msc.es2.reader import ES2Field
 from gui.models import TreeModel
 
 from .dialogs import BoltCheckerDialog, EditDialog, MapViewDialog
 
 class MainWindow(QMainWindow):
+    file_data: dict[str, ES2Field]
+
     def __init__(self):
         super().__init__()
 
@@ -117,7 +121,7 @@ class MainWindow(QMainWindow):
     def edit_index(self, index):
         assert self.ui
         assert self.file_data
-        tag = index.data()
+        tag = cast(str, index.data())
         dialog = EditDialog(tag, self.file_data[tag], self)
         result = dialog.exec_()
         if result == QDialog.Accepted:
