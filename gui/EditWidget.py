@@ -19,7 +19,7 @@ class Ui_EditWidget(object):
         self.label.setObjectName("label")
         self.verticalLayout.addWidget(self.label)
         self.scrollArea = QtWidgets.QScrollArea(EditWidget)
-        self.scrollArea.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.scrollArea.setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.editWidgetsContainer = QtWidgets.QWidget()

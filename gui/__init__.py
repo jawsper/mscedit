@@ -37,8 +37,8 @@ class MainWindow(QMainWindow):
         self.ui.action_BoltChecker.triggered.connect(self.show_boltchecker)
 
         self.datamodel = QSortFilterProxyModel()
-        self.datamodel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-        self.datamodel.setSortCaseSensitivity(Qt.CaseInsensitive)
+        self.datamodel.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        self.datamodel.setSortCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.ui.treeView.setSortingEnabled(False)
         self.ui.treeView.setModel(self.datamodel)
         self.ui.treeView.setSortingEnabled(True)
@@ -100,7 +100,7 @@ class MainWindow(QMainWindow):
     def update_tree(self, file_data=None):
         assert self.ui
         self.datamodel.setSourceModel(TreeModel(file_data))
-        self.ui.treeView.sortByColumn(0, Qt.AscendingOrder)
+        self.ui.treeView.sortByColumn(0, Qt.SortOrder.AscendingOrder)
         self.ui.treeView.resizeColumnToContents(0)
 
     def treeView_selectionChanged(self):
@@ -124,7 +124,7 @@ class MainWindow(QMainWindow):
         tag = cast(str, index.data())
         dialog = EditDialog(tag, self.file_data[tag], self)
         result = dialog.exec_()
-        if result == QDialog.Accepted:
+        if result == QDialog.DialogCode.Accepted:
             dialog_result = dialog.get_value()
             if self.file_data[tag].value == dialog_result:
                 return

@@ -59,19 +59,19 @@ class TreeModel(QAbstractItemModel):
         else:
             return self.rootItem.columnCount()
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index, role: Qt.ItemDataRole=Qt.ItemDataRole.DisplayRole):
         if not index.isValid():
             return None
 
-        if role != Qt.DisplayRole:
+        if role != Qt.ItemDataRole.DisplayRole:
             return None
 
         item = index.internalPointer()
 
         return item.data(index.column())
 
-    def setData(self, index, value, role=Qt.EditRole):
-        if role == Qt.EditRole:
+    def setData(self, index, value, role: Qt.ItemDataRole=Qt.ItemDataRole.EditRole):
+        if role == Qt.ItemDataRole.EditRole:
             row = index.row()
             child = self.rootItem.child(row)
             child.setData(index.column(), str(value))
@@ -85,8 +85,8 @@ class TreeModel(QAbstractItemModel):
 
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
-    def headerData(self, section, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+    def headerData(self, section, orientation: Qt.Orientation, role: Qt.ItemDataRole):
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return self.rootItem.data(section)
 
         return None

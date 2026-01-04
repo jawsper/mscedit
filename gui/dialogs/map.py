@@ -57,7 +57,7 @@ class MapViewDialog(QDialog):
         point = QPoint()
         pen = QPen(Qt.red)
         pen.setWidth(10)
-        colors = cycle([Qt.magenta, Qt.red, Qt.blue, Qt.green, Qt.yellow, Qt.cyan])
+        colors = cycle([Qt.GlobalColor.magenta, Qt.GlobalColor.red, Qt.GlobalColor.blue, Qt.GlobalColor.green, Qt.GlobalColor.yellow, Qt.GlobalColor.cyan])
         for marker in self.markers:
             pen.setColor(next(colors))
             painter.setPen(pen)
