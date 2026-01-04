@@ -103,28 +103,31 @@
 #             return None
 
 
-def type_get_hash(name):
+def type_get_hash(name: str):
+    def _clamp_uint(val: int):
+        return val & 0xFFFFFFFF
+
     if len(name) == 0:
         return 0
-    i = len(name)
-    num = i
-    num2 = i & 1
-    i >>= 1
-    num3 = 0
-    while i > 0:
-        num += ord(name[num3])
-        num4 = (ord(name[num3 + 1]) << 11) ^ num
-        num = num << 16 ^ num4
+    length = len(name)  # int
+    num = length  # uint
+    length_is_odd = length & 1
+    length >>= 1
+    num3 = 0  # int
+    while length > 0:
+        num = _clamp_uint(num + ord(name[num3]))
+        num4 = _clamp_uint((ord(name[num3 + 1]) << 11) ^ num)
+        num = _clamp_uint((num << 16) ^ num4)
         num3 += 2
-        num += num >> 11
-        i -= 1
-    if num2 == 1:
-        num += ord(name[num3])
-        num ^= num << 11
-        num += num >> 17
-    num ^= num << 3
-    num += num >> 5
-    num ^= num << 4
-    num += num >> 17
-    num ^= num << 25
-    return num + (num >> 6)
+        num = _clamp_uint(num + (num >> 11))
+        length -= 1
+    if length_is_odd == 1:
+        num = _clamp_uint(num + ord(name[num3]))
+        num = _clamp_uint(num ^ (num << 11))
+        num = _clamp_uint(num + (num >> 17))
+    num = _clamp_uint(num ^ (num << 3))
+    num = _clamp_uint(num + (num >> 5))
+    num = _clamp_uint(num ^ (num << 4))
+    num = _clamp_uint(num + (num >> 17))
+    num = _clamp_uint(num ^ (num << 25))
+    return _clamp_uint(num + (num >> 6))
