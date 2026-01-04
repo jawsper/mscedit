@@ -16,20 +16,43 @@ class ES2Collection(Enum):
     Encrypt = 127
 
 
+class ES2ValueTypeMap(str, Enum):
+    """
+    This enum is used to map the function names with the C# types.
+    This is used to get the integer hash needed by ES2ValueType,
+    by putting the value msc.type_get_hash, which gives the integer hash.
+    """
+    byte = "System.Byte"
+    bool = "System.Boolean"
+    string = "System.String"
+    int = "System.Int32"
+    float = "System.Single"
+    boneweight = "UnityEngine.BoneWeight"
+    color = "UnityEngine.Color"
+    matrix4x4 = "UnityEngine.Matrix4x4"
+    mesh = "UnityEngine.Mesh"
+    quaternion = "UnityEngine.Quaternion"
+    vector2 = "UnityEngine.Vector2"
+    vector3 = "UnityEngine.Vector3"
+    vector4 = "UnityEngine.Vector4"
+    texture2d = "UnityEngine.Texture2D"
+    transform = "UnityEngine.Transform"
+
+
 class ES2ValueType(IntEnum):
     Null = 0
-    transform = 159054454
-    color = 852446001
-    float = 1849612139
-    bool = 2907536540
-    int = 3802662998
-    string = 4259967470
-    mesh = 2420697311
     byte = 916439771
-    quaternion = 121  # TODO: find actual hash!
-    vector2 = 122  # TODO: find actual hash!
-    vector3 = 0xEC66DC46
-    vector4 = 124  # TODO: find actual hash!
-    matrix4x4 = 125  # TODO: find actual hash!
-    boneweight = 126  # TODO: find actual hash!
+    bool = 2907536540
+    string = 4259967470
+    int = 3802662998
+    float = 1849612139
+    boneweight = 1899243194
+    color = 852446001
+    mesh = 2420697311
+    matrix4x4 = 4002355558
+    quaternion = 3919836870
+    vector2 = 3046768853
+    vector3 = 3966164038
+    vector4 = 4170910408
     texture2d = 1791399917
+    transform = 159054454
