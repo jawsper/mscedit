@@ -57,9 +57,13 @@ class MainWindow(QMainWindow):
     def open_file(self, filename):
         self.filename = filename
         self.open_file_dir = os.path.dirname(self.filename)
-        with open(filename, "rb") as f:
-            reader = ES2Reader(f)
-            self.file_data = reader.read_all()
+        try:
+            with open(filename, "rb") as f:
+                reader = ES2Reader(f)
+                self.file_data = reader.read_all()
+        except Exception as e:
+            logger.exception("Failed to load file")
+            return self.show_error(e)
         self.update_tree(self.file_data)
         self.set_changed(False)
         self.ui.action_Close.setEnabled(True)
