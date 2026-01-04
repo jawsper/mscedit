@@ -1,9 +1,10 @@
+import logging
 import os
 import shutil
 import tempfile
 from typing import cast
 
-from PyQt5.QtCore import Qt, QSortFilterProxyModel
+from PyQt5.QtCore import Qt, QModelIndex, QSortFilterProxyModel
 from PyQt5.QtWidgets import QMainWindow, qApp, QFileDialog, QDialog
 from PyQt5.uic import loadUi
 
@@ -12,6 +13,10 @@ from msc.es2.reader import ES2Field
 from gui.models import TreeModel
 
 from .dialogs import BoltCheckerDialog, EditDialog, ErrorDialog, MapViewDialog
+
+
+logger = logging.getLogger(__name__)
+
 
 class MainWindow(QMainWindow):
     file_data: dict[str, ES2Field]
@@ -54,7 +59,7 @@ class MainWindow(QMainWindow):
         if fname[0]:
             self.open_file(fname[0])
 
-    def open_file(self, filename):
+    def open_file(self, filename: str):
         self.filename = filename
         self.open_file_dir = os.path.dirname(self.filename)
         try:
@@ -68,7 +73,7 @@ class MainWindow(QMainWindow):
         self.set_changed(False)
         self.ui.action_Close.setEnabled(True)
 
-    def set_changed(self, changed=True):
+    def set_changed(self, changed: bool = True):
         self.data_changed = changed
         self.ui.action_Save.setEnabled(self.data_changed)
 
@@ -119,10 +124,10 @@ class MainWindow(QMainWindow):
 
     def treeView_doubleClicked(self):
         assert self.ui
-        index = self.ui.treeView.selectionModel().selection().indexes()[0]
+        index: QModelIndex = self.ui.treeView.selectionModel().selection().indexes()[0]
         self.edit_index(index)
 
-    def edit_index(self, index):
+    def edit_index(self, index: QModelIndex):
         assert self.ui
         assert self.file_data
         tag = cast(str, index.data())
@@ -137,7 +142,7 @@ class MainWindow(QMainWindow):
             value_index = self.datamodel.index(index.row(), 2)
             self.datamodel.setData(value_index, dialog_result)
 
-    def searchField_textChanged(self, text):
+    def searchField_textChanged(self, text: str):
         self.datamodel.setFilterWildcard(text)
 
     def show_map(self):

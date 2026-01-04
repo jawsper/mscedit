@@ -1,6 +1,5 @@
 from PyQt5.QtCore import Qt, QAbstractItemModel, QModelIndex
 
-
 from msc.es2.enums import ES2Collection, ES2ValueType
 
 
@@ -59,7 +58,7 @@ class TreeModel(QAbstractItemModel):
         else:
             return self.rootItem.columnCount()
 
-    def data(self, index, role: Qt.ItemDataRole=Qt.ItemDataRole.DisplayRole):
+    def data(self, index, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole):
         if not index.isValid():
             return None
 
@@ -70,7 +69,7 @@ class TreeModel(QAbstractItemModel):
 
         return item.data(index.column())
 
-    def setData(self, index, value, role: Qt.ItemDataRole=Qt.ItemDataRole.EditRole):
+    def setData(self, index, value, role: Qt.ItemDataRole = Qt.ItemDataRole.EditRole):
         if role == Qt.ItemDataRole.EditRole:
             row = index.row()
             child = self.rootItem.child(row)
@@ -86,7 +85,10 @@ class TreeModel(QAbstractItemModel):
         return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
     def headerData(self, section, orientation: Qt.Orientation, role: Qt.ItemDataRole):
-        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
+        if (
+            orientation == Qt.Orientation.Horizontal
+            and role == Qt.ItemDataRole.DisplayRole
+        ):
             return self.rootItem.data(section)
 
         return None

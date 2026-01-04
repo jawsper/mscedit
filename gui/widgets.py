@@ -23,6 +23,8 @@ from msc.es2.types import (
     Texture2D,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class ClickableLabel(QLabel):
     mousePressed = pyqtSignal("QMouseEvent")
@@ -67,15 +69,21 @@ class EditWidget(QWidget):
                     self.item.header.value_type, self.tag, self.item.value
                 )
             case _:
-                logging.warn(f"Cannot render widgets for {self.item.header.collection_type}")
+                logger.warning(
+                    f"Cannot render widgets for {self.item.header.collection_type}"
+                )
         self.get_widget_container().setAlignment(Qt.AlignTop)
 
-    def _add_edit_widgets_to_layout(self, value_type: ES2ValueType, label, value, *, is_dict: bool = False):
+    def _add_edit_widgets_to_layout(
+        self, value_type: ES2ValueType, label, value, *, is_dict: bool = False
+    ):
         wrapper = QWidget()
         wrapper.show()
         wrapper_layout = QVBoxLayout()
         wrapper.setLayout(wrapper_layout)
-        for widget in self._make_edit_widgets(value_type, label, value, is_dict=is_dict):
+        for widget in self._make_edit_widgets(
+            value_type, label, value, is_dict=is_dict
+        ):
             widget.show()
             wrapper_layout.addWidget(widget)
         self.get_widget_container().addWidget(wrapper)
@@ -153,7 +161,9 @@ class EditWidget(QWidget):
         image.setScaledContents(True)
         yield image
 
-    def _make_edit_widgets(self, value_type: ES2ValueType, label, value, *, is_dict: bool = False):
+    def _make_edit_widgets(
+        self, value_type: ES2ValueType, label, value, *, is_dict: bool = False
+    ):
         widgets = []
 
         widget_factory = f"_widget_{value_type.name}"
@@ -167,6 +177,8 @@ class EditWidget(QWidget):
                     widgets.append(groupbox)
                 else:
                     widgets.append(widget)
+        else:
+            logger.warning("No widget factory for type '%s'", value_type.name)
 
         return widgets
 
@@ -176,7 +188,7 @@ class EditWidget(QWidget):
             widget = layout.itemAt(0).widget()
         else:
             widget = wrapper
-        
+
         if is_dict:
             key = widget.title()
             value = self._get_widget_result(widget, value_type)
@@ -246,7 +258,9 @@ class EditWidget(QWidget):
                 for i in range(self.get_widget_container().count()):
                     widget = self.get_widget_container().itemAt(i).widget()
                     k, v = self._get_widget_result(
-                        widget, self.item.header.value_type, is_dict=True,
+                        widget,
+                        self.item.header.value_type,
+                        is_dict=True,
                     )
                     value[k] = v
                 return value
@@ -254,8 +268,10 @@ class EditWidget(QWidget):
                 widget = self.get_widget_container().itemAt(0).widget()
                 return self._get_widget_result(widget, self.item.header.value_type)
             case _:
-                logging.warn(f"Cannot get value for {self.item.header.collection_type}")
-        logging.warn("No value was returned.")
+                logger.warning(
+                    f"Cannot get value for {self.item.header.collection_type}"
+                )
+        logger.warning("No value was returned.")
 
     def get_widget_container(self):
         return self.ui.editWidgetsContainer.layout()
