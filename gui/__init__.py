@@ -11,7 +11,7 @@ from msc.es2 import ES2Reader, ES2Writer
 from msc.es2.reader import ES2Field
 from gui.models import TreeModel
 
-from .dialogs import BoltCheckerDialog, EditDialog, MapViewDialog
+from .dialogs import BoltCheckerDialog, EditDialog, ErrorDialog, MapViewDialog
 
 class MainWindow(QMainWindow):
     file_data: dict[str, ES2Field]
@@ -142,4 +142,8 @@ class MainWindow(QMainWindow):
 
     def show_boltchecker(self):
         dialog = BoltCheckerDialog(self.file_data, self)
+        dialog.exec_()
+
+    def show_error(self, exception: Exception):
+        dialog = ErrorDialog(exception, self)
         dialog.exec_()
