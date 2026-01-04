@@ -2,6 +2,7 @@ import logging
 from typing import Any
 
 from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (
     QWidget,
     QCheckBox,
@@ -13,7 +14,14 @@ from PyQt5.QtWidgets import (
 from PyQt5.uic import loadUi
 
 from msc.es2 import ES2Collection, ES2ValueType
-from msc.es2.types import ES2Field, ES2Transform, ES2Color, Vector3, Quaternion
+from msc.es2.types import (
+    ES2Field,
+    ES2Transform,
+    ES2Color,
+    Vector3,
+    Quaternion,
+    Texture2D,
+)
 
 
 class ClickableLabel(QLabel):
@@ -136,6 +144,14 @@ class EditWidget(QWidget):
             field = QLineEdit()
             field.setText(str(val))
             yield field
+
+    def _widget_texture2d(self, label, value: Texture2D):
+        image = QLabel()
+        pixmap = QPixmap()
+        pixmap.loadFromData(value.image)
+        image.setPixmap(pixmap)
+        image.setScaledContents(True)
+        yield image
 
     def _make_edit_widgets(self, value_type: ES2ValueType, label, value, *, is_dict: bool = False):
         widgets = []
