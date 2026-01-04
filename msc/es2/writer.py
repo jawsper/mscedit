@@ -80,7 +80,7 @@ class ES2Writer:
         self.write("ffff", *param.list())
 
     def write_mesh(self, param: Mesh):
-        assert param.settings != None
+        assert param.settings is not None
         self.write(param.settings.get_bytes())
         self._write_array(ES2ValueType.vector3, param.vertices)
         self._write_array(ES2ValueType.int, param.triangles)
