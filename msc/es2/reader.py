@@ -16,6 +16,7 @@ from .types import (
     Quaternion,
     MeshSettings,
     Mesh,
+    Texture2D,
 )
 
 
@@ -101,6 +102,9 @@ class ES2Reader:
 
     def read_int(self) -> int:
         return self.read("I")
+    
+    def read_int32(self) -> int:
+        return self.read("i")
 
     def read_byte(self) -> int:
         return self.read("B")
@@ -173,6 +177,22 @@ class ES2Reader:
         # print()
         mesh.settings = mesh_settings
         return mesh
+    
+    def read_texture2d(self):
+        texture = None
+        num = self.read_byte()
+        if num >= 0:
+            data_length = self.read_int()
+            texture = Texture2D(self.stream.read(data_length))
+        if num >= 1:
+            texture.filter_mode = self.read_int32()
+        if num >= 2:
+            texture.aniso_level = self.read_int32()
+        if num >= 3:
+            texture.wrap_mode = self.read_int32()
+        if num >= 4:
+            texture.mip_map_bias = self.read_float()
+        return texture
 
     def _read_array(self, type):
         array = []

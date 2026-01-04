@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import struct
 from typing import Any
 
@@ -171,3 +172,15 @@ class Mesh:
 
     def get_triangles(self, submesh_id):
         return self.submeshes[submesh_id]
+
+
+@dataclass
+class Texture2D:
+    image: bytes
+    filter_mode: int | None = None
+    aniso_level: int | None = None
+    wrap_mode: int | None = None
+    mip_map_bias: float | None = None
+
+    def __str__(self):
+        return f"Texture2D({len(self.image)} bytes)"

@@ -32,3 +32,4 @@ class ES2ValueType(IntEnum):
     vector4 = 124  # TODO: find actual hash!
     matrix4x4 = 125  # TODO: find actual hash!
     boneweight = 126  # TODO: find actual hash!
+    texture2d = 1791399917

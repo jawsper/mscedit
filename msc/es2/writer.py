@@ -2,7 +2,15 @@ from collections import OrderedDict
 import struct
 from typing import Any, BinaryIO
 
-from msc.es2.types import ES2Color, ES2Field, ES2Transform, Mesh, Quaternion, Vector3
+from msc.es2.types import (
+    ES2Color,
+    ES2Field,
+    ES2Transform,
+    Mesh,
+    Quaternion,
+    Vector3,
+    Texture2D,
+)
 
 from .enums import ES2Collection, ES2ValueType
 
@@ -22,7 +30,16 @@ class ES2Writer:
         self.write_int32(param)
 
     def write_int32(self, param: int):
+        """
+        Writes an unsigned 32-bit integer
+        """
         self.write("I", param)
+    
+    def write_sint32(self, param, int):
+        """
+        Writes a signed 32-bit integer
+        """
+        self.write("i", param)
 
     def write_float(self, param: float):
         self.write("f", param)
@@ -84,6 +101,15 @@ class ES2Writer:
             self._write_array(ES2ValueType.vector4, param.tangents)
         if param.settings.save_colors:
             self._write_array(ES2ValueType.color, param.colors32)
+
+    def write_texture2d(self, texture: Texture2D):
+        self.write_byte(6)
+        self.write_sint32(len(texture.image))
+        self.stream.write(texture.image)
+        self.write_sint32(texture.filter_mode)
+        self.write_sint32(texture.aniso_level)
+        self.write_sint32(texture.wrap_mode)
+        self.write_float(texture.mip_map_bias)
 
     def write(self, fmt, *param):
         if len(param) == 0:
