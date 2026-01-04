@@ -32,7 +32,7 @@ class ES2Reader:
         except EOFError:
             return False
         if b != 126:  # '~'
-            raise ES2InvalidDataException
+            raise ES2InvalidDataException(f"Encountered invalid byte '{b}' when reading next tag.")
         self.current_tag.tag = self.read_string()
         self.current_tag.next_tag_position = self.read_int() + self.stream.tell()
         self.current_tag.settings_position = self.stream.tell()
@@ -240,4 +240,4 @@ class ES2Reader:
                         )
                     # value_type = hash???
                     raise NotImplemented("Get type from key not implemented")
-        raise ES2InvalidDataException
+        raise ES2InvalidDataException("Encountered invalid data when reading header.")TOD
