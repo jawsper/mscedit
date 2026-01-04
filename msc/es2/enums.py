@@ -1,7 +1,7 @@
 from enum import Enum, IntEnum
 
 
-class ES2Collection(Enum):
+class ES2Key(Enum):
     NativeArray = 81
     Dictionary = 82
     List = 83

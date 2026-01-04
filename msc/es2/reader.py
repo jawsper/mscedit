@@ -4,7 +4,7 @@ from typing import Any, BinaryIO
 import logging
 
 from .exceptions import ES2InvalidDataException
-from .enums import ES2Collection, ES2ValueType
+from .enums import ES2Key, ES2ValueType
 from .types import (
     ES2Header,
     ES2HeaderSettings,
@@ -32,9 +32,9 @@ class ES2Reader:
             b = self.read_byte()
         except EOFError:
             return False
-        if b != 126:  # '~'
+        if b != ES2Key.Tag.value:
             raise ES2InvalidDataException(
-                f"Encountered invalid byte '{b}' when reading next tag."
+                f"Encountered invalid byte '{b}' when reading next tag, expected '{ES2Key.Tag.value}'."
             )
         self.current_tag.tag = self.read_string()
         self.current_tag.next_tag_position = self.read_int() + self.stream.tell()
@@ -53,14 +53,14 @@ class ES2Reader:
             if header.settings.encrypt:
                 raise NotImplementedError("Cannot deal with encryption sorry.")
             match header.collection_type:
-                case ES2Collection.List:
+                case ES2Key.List:
                     self.read_byte()
                     num = self.read_int()
                     val = []
                     for i in range(num):
                         val.append(self._read_type(header.value_type))
                     data[self.current_tag.tag] = val
-                case ES2Collection.Dictionary:
+                case ES2Key.Dictionary:
                     self.read_byte()
                     self.read_byte()
                     val = {}
@@ -70,7 +70,7 @@ class ES2Reader:
                         v = self._read_type(header.value_type)
                         val[k] = v
                     data[self.current_tag.tag] = val
-                case ES2Collection.Null:
+                case ES2Key.Null:
                     data[self.current_tag.tag] = self._read_type(header.value_type)
                 case _:
                     logging.warning(
@@ -234,24 +234,24 @@ class ES2Reader:
         return val
 
     def read_header(self):
-        collection_type = ES2Collection.Null
+        collection_type = ES2Key.Null
         key_type = ES2ValueType.Null
         value_type = ES2ValueType.Null
         settings = ES2HeaderSettings(encrypt=False, debug=False)
         while True:
             b = self.read_byte()
-            if b == 127:
+            if b == ES2Key.Encrypt.value:
                 settings.encrypt = True
-            elif b == 123:
+            elif b == ES2Key.Terminator.value:
                 continue
-            elif b == 255:
-                if collection_type == ES2Collection.Dictionary:
+            elif b == 255:  # byte.MaxValue
+                if collection_type == ES2Key.Dictionary:
                     key_type = ES2ValueType(self.read_int())
                 else:
                     value_type = ES2ValueType(self.read_int())
                 return ES2Header(collection_type, key_type, value_type, settings)
             elif b < 81:
-                if collection_type == ES2Collection.Dictionary:
+                if collection_type == ES2Key.Dictionary:
                     pass
                     # key_type = hash???
                 else:
@@ -261,11 +261,11 @@ class ES2Reader:
                 return ES2Header(collection_type, key_type, value_type, settings)
             elif b >= 101:
                 break
-            else:
-                collection_type = ES2Collection(b)
-                if collection_type == ES2Collection.Dictionary:
+            elif b == ES2Key.Dictionary.value:
+                collection_type = ES2Key(b)
+                if collection_type == ES2Key.Dictionary:
                     b2 = self.read_byte()
-                    if b2 == 255:
+                    if b2 == 255:  # byte.MaxValue
                         value_type = ES2ValueType(self.read_int())
                         key_type = ES2ValueType(self.read_int())
                         return ES2Header(

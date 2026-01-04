@@ -12,7 +12,7 @@ from msc.es2.types import (
     Texture2D,
 )
 
-from .enums import ES2Collection, ES2ValueType
+from .enums import ES2Key, ES2ValueType
 
 
 class ES2Writer:
@@ -150,16 +150,16 @@ class ES2Writer:
     def _write_header(
         self,
         tag: str,
-        collection_type: ES2Collection,
+        collection_type: ES2Key,
         value_type: ES2ValueType,
         key_type: ES2ValueType,
     ):
-        self.write_byte(126)
+        self.write_byte(ES2Key.Tag.value)
         self.write_string(tag)
         length_position = self.stream.tell()
         self.write_int32(0)
 
-        if collection_type != ES2Collection.Null:
+        if collection_type != ES2Key.Null:
             self.write_byte(collection_type.value)
         self.write_byte(255)
         self.write_int32(value_type.value)
@@ -175,7 +175,7 @@ class ES2Writer:
         self.stream.seek(position)
 
     def _write_terminator(self):
-        self.write_byte(123)
+        self.write_byte(ES2Key.Terminator.value)
 
     def save(self, key, value):
         self.data[key] = value
@@ -196,11 +196,11 @@ class ES2Writer:
             )
 
             match collection_type:
-                case ES2Collection.List:
+                case ES2Key.List:
                     self._write_list(header.value_type, value)
-                case ES2Collection.Dictionary:
+                case ES2Key.Dictionary:
                     self._write_dict(header.key_type, header.value_type, value)
-                case ES2Collection.Null:
+                case ES2Key.Null:
                     self._write_type(value_type, value)
                 case _:
                     print(k)

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import struct
 from typing import Any
 
-from msc.es2.enums import ES2Collection, ES2ValueType
+from msc.es2.enums import ES2Key, ES2ValueType
 
 
 class ES2HeaderSettings:
@@ -15,14 +15,14 @@ class ES2HeaderSettings:
 
 
 class ES2Header:
-    collection_type: ES2Collection
+    collection_type: ES2Key
     key_type: ES2ValueType
     value_type: ES2ValueType
     settings: ES2HeaderSettings
 
     def __init__(
         self,
-        collection_type: ES2Collection,
+        collection_type: ES2Key,
         key_type: ES2ValueType,
         value_type: ES2ValueType,
         settings: ES2HeaderSettings,

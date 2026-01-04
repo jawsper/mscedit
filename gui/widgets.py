@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.uic import loadUi
 
-from msc.es2 import ES2Collection, ES2ValueType
+from msc.es2 import ES2Key, ES2ValueType
 from msc.es2.types import (
     ES2Field,
     ES2Transform,
@@ -54,17 +54,17 @@ class EditWidget(QWidget):
 
     def add_edit_widgets(self):
         match self.item.header.collection_type:
-            case ES2Collection.List:
+            case ES2Key.List:
                 for item in self.item.value:
                     self._add_edit_widgets_to_layout(
                         self.item.header.value_type, "", item
                     )
-            case ES2Collection.Dictionary:
+            case ES2Key.Dictionary:
                 for key, value in self.item.value.items():
                     self._add_edit_widgets_to_layout(
                         self.item.header.value_type, key, value, is_dict=True
                     )
-            case ES2Collection.Null:
+            case ES2Key.Null:
                 self._add_edit_widgets_to_layout(
                     self.item.header.value_type, self.tag, self.item.value
                 )
@@ -245,7 +245,7 @@ class EditWidget(QWidget):
 
     def get_value(self):
         match self.item.header.collection_type:
-            case ES2Collection.List:
+            case ES2Key.List:
                 value = []
                 for i in range(self.get_widget_container().count()):
                     widget = self.get_widget_container().itemAt(i).widget()
@@ -253,7 +253,7 @@ class EditWidget(QWidget):
                         self._get_widget_result(widget, self.item.header.value_type)
                     )
                 return value
-            case ES2Collection.Dictionary:
+            case ES2Key.Dictionary:
                 value = {}
                 for i in range(self.get_widget_container().count()):
                     widget = self.get_widget_container().itemAt(i).widget()
@@ -264,7 +264,7 @@ class EditWidget(QWidget):
                     )
                     value[k] = v
                 return value
-            case ES2Collection.Null:
+            case ES2Key.Null:
                 widget = self.get_widget_container().itemAt(0).widget()
                 return self._get_widget_result(widget, self.item.header.value_type)
             case _:

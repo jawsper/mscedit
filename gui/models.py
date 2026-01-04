@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt, QAbstractItemModel, QModelIndex
 
-from msc.es2.enums import ES2Collection, ES2ValueType
+from msc.es2.enums import ES2Key, ES2ValueType
 
 
 class TreeItem(object):
@@ -135,7 +135,7 @@ class TreeModel(QAbstractItemModel):
         parents = [parent]
         for tag, entry in data.items():
             header = entry.header
-            if header.collection_type != ES2Collection.Null:
+            if header.collection_type != ES2Key.Null:
                 if header.key_type != ES2ValueType.Null:
                     header_text = f"{header.collection_type.name}[{header.key_type.name}, {header.value_type.name}]"
                 else:
