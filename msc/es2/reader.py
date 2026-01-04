@@ -101,6 +101,12 @@ class ES2Reader:
         raise Exception("Format_Bad7BitInt32")
 
     def read_int(self) -> int:
+        """
+        Reads an UNSIGNED integer
+        
+        :return: The value read from the stream
+        :rtype: int
+        """
         return self.read("I")
     
     def read_int32(self) -> int:

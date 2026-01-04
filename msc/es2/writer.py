@@ -34,7 +34,7 @@ class ES2Writer:
         Writes an unsigned 32-bit integer
         """
         self.write("I", param)
-    
+
     def write_sint32(self, param, int):
         """
         Writes a signed 32-bit integer
@@ -133,7 +133,9 @@ class ES2Writer:
         for item in param:
             self._write_type(value_type, item)
 
-    def _write_dict(self, key_type: ES2ValueType, value_type: ES2ValueType, param: dict):
+    def _write_dict(
+        self, key_type: ES2ValueType, value_type: ES2ValueType, param: dict
+    ):
         self.write_byte(0)
         self.write_byte(0)
         self.write_int32(len(param))
@@ -202,7 +204,9 @@ class ES2Writer:
                     self._write_type(value_type, value)
                 case _:
                     print(k)
-                    raise NotImplementedError(f"Collection type not implemented: {collection_type.name}")
+                    raise NotImplementedError(
+                        f"Collection type not implemented: {collection_type.name}"
+                    )
 
             self._write_terminator()
             self._write_length(length_position)
