@@ -31,7 +31,7 @@ class ES2Writer:
         self.write_string(param)
 
     def write_string(self, param):
-        param = param.encode("ascii")
+        param = param.encode("utf8")
         if len(param) > 127:
             raise NotImplementedError("Cannot write strings longer than 127 bytes.")
         self.write_7bit_encoded_int(len(param))

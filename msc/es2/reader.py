@@ -86,7 +86,7 @@ class ES2Reader:
         if strlen > 127:
             # todo: implement longer strings (is it even hard?)
             raise NotImplementedError("Long strings not supported yet")
-        return self.stream.read(strlen).decode("ascii")
+        return self.stream.read(strlen).decode("utf8")
 
     def read_7bit_encoded_int(self):
         num = 0
