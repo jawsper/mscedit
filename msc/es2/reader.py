@@ -33,7 +33,9 @@ class ES2Reader:
         except EOFError:
             return False
         if b != 126:  # '~'
-            raise ES2InvalidDataException(f"Encountered invalid byte '{b}' when reading next tag.")
+            raise ES2InvalidDataException(
+                f"Encountered invalid byte '{b}' when reading next tag."
+            )
         self.current_tag.tag = self.read_string()
         self.current_tag.next_tag_position = self.read_int() + self.stream.tell()
         self.current_tag.settings_position = self.stream.tell()
@@ -71,7 +73,9 @@ class ES2Reader:
                 case ES2Collection.Null:
                     data[self.current_tag.tag] = self._read_type(header.value_type)
                 case _:
-                    logging.warn(f"Failed to read header collection type {header.collection_type}")
+                    logging.warning(
+                        f"Failed to read header collection type {header.collection_type}"
+                    )
 
             data[self.current_tag.tag] = ES2Field(
                 header, data.get(self.current_tag.tag, None)
@@ -103,12 +107,15 @@ class ES2Reader:
     def read_int(self) -> int:
         """
         Reads an UNSIGNED integer
-        
+
         :return: The value read from the stream
         :rtype: int
         """
+        return self.read_uint32()
+
+    def read_uint32(self) -> int:
         return self.read("I")
-    
+
     def read_int32(self) -> int:
         return self.read("i")
 
@@ -183,7 +190,7 @@ class ES2Reader:
         # print()
         mesh.settings = mesh_settings
         return mesh
-    
+
     def read_texture2d(self):
         texture = None
         num = self.read_byte()
@@ -265,5 +272,5 @@ class ES2Reader:
                             collection_type, key_type, value_type, settings
                         )
                     # value_type = hash???
-                    raise NotImplemented("Get type from key not implemented")
-        raise ES2InvalidDataException("Encountered invalid data when reading header.")TOD
+                    raise NotImplementedError("Get type from key not implemented")
+        raise ES2InvalidDataException("Encountered invalid data when reading header.")
