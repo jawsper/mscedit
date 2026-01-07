@@ -76,6 +76,9 @@ class ES2Field:
     header: ES2Header
     value: Any
 
+    @classmethod
+    def from_value_type(cls, value_type: ES2ValueType, value: Any):
+        return cls(ES2Header(value_type=value_type), value)
 
 
 class MeshSettings:
