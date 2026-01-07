@@ -37,7 +37,7 @@ class ES2Reader:
                 f"Encountered invalid byte '{chunk_start_byte}' when reading next tag, expected '{ES2Key.Tag.value}'."
             )
         self.current_tag.tag = self.read_string()
-        self.current_tag.next_tag_position = self.read_int() + self.stream.tell()
+        self.current_tag.next_tag_position = self.read_int32() + self.stream.tell()
         self.current_tag.settings_position = self.stream.tell()
         return True
 
@@ -169,7 +169,7 @@ class ES2Reader:
         mesh.vertices = self._read_array(ES2ValueType.vector3)
         mesh.triangles = self._read_array(ES2ValueType.int)
         if mesh_settings.save_submeshes:
-            mesh.submesh_count = self.read_int()
+            mesh.submesh_count = self.read_int32()
             for submesh_id in range(mesh.submesh_count):
                 mesh.set_triangles(self._read_array(ES2ValueType.int), submesh_id)
         if mesh_settings.save_skinning:
@@ -199,7 +199,7 @@ class ES2Reader:
         texture = None
         num = self.read_byte()
         if num >= 0:
-            data_length = self.read_int()
+            data_length = self.read_int32()
             texture = Texture2D(self.stream.read(data_length))
         if num >= 1:
             texture.filter_mode = self.read_int32()
@@ -213,7 +213,7 @@ class ES2Reader:
 
     def _read_array(self, type: ES2ValueType):
         array = []
-        count = self.read_int()
+        count = self.read_int32()
         for _ in range(count):
             array.append(self._read_type(type))
         return array
@@ -250,9 +250,9 @@ class ES2Reader:
                 continue
             elif b == 255:  # byte.MaxValue
                 if collection_type == ES2Key.Dictionary:
-                    key_type = ES2ValueType(self.read_int())
+                    key_type = ES2ValueType(self.read_uint32())
                 else:
-                    value_type = ES2ValueType(self.read_int())
+                    value_type = ES2ValueType(self.read_uint32())
                 return ES2Header(collection_type, key_type, value_type, settings)
             elif b < 81:
                 if collection_type == ES2Key.Dictionary:
@@ -270,8 +270,8 @@ class ES2Reader:
                 if collection_type == ES2Key.Dictionary:
                     b2 = self.read_byte()
                     if b2 == 255:  # byte.MaxValue
-                        value_type = ES2ValueType(self.read_int())
-                        key_type = ES2ValueType(self.read_int())
+                        value_type = ES2ValueType(self.read_uint32())
+                        key_type = ES2ValueType(self.read_uint32())
                         return ES2Header(
                             collection_type, key_type, value_type, settings
                         )
