@@ -72,7 +72,7 @@ class EditWidget(QWidget):
                 logger.warning(
                     f"Cannot render widgets for {self.item.header.collection_type}"
                 )
-        self.get_widget_container().setAlignment(Qt.AlignTop)
+        self.get_widget_container().setAlignment(Qt.AlignmentFlag.AlignTop)
 
     def _add_edit_widgets_to_layout(
         self, value_type: ES2ValueType, label, value, *, is_dict: bool = False

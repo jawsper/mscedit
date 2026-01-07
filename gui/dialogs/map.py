@@ -55,7 +55,7 @@ class MapViewDialog(QDialog):
         painter = QPainter()
         painter.begin(image)
         point = QPoint()
-        pen = QPen(Qt.red)
+        pen = QPen(Qt.GlobalColor.red)
         pen.setWidth(10)
         colors = cycle(
             [
