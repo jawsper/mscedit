@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog, QVBoxLayout, QLabel, QDialogButtonBox
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QDialogButtonBox
 
 
 class ErrorDialog(QDialog):

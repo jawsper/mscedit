@@ -4,9 +4,9 @@ import shutil
 import tempfile
 from typing import cast
 
-from PyQt5.QtCore import Qt, QModelIndex, QSortFilterProxyModel
-from PyQt5.QtWidgets import QMainWindow, qApp, QFileDialog, QDialog
-from PyQt5.uic import loadUi
+from PyQt6.QtCore import Qt, QModelIndex, QSortFilterProxyModel
+from PyQt6.QtWidgets import QMainWindow, QApplication, QFileDialog, QDialog
+from PyQt6.uic.load_ui import loadUi
 
 from msc.es2 import ES2Reader, ES2Writer
 from msc.es2.reader import ES2Field
@@ -40,7 +40,7 @@ class MainWindow(QMainWindow):
         self.data_changed = False
         self.file_data = None
 
-        self.open_file_dir = os.path.expanduser("~")
+        self.open_file_dir = "."  # os.path.expanduser("~")
 
         self.ui = loadUi("gui/MainWindow.ui", self)
         assert self.ui
@@ -48,7 +48,7 @@ class MainWindow(QMainWindow):
         self.ui.action_Open.triggered.connect(self.menu_open)
         self.ui.action_Save.triggered.connect(self.menu_save)
         self.ui.action_Close.triggered.connect(self.menu_close)
-        self.ui.action_Exit.triggered.connect(qApp.quit)
+        self.ui.action_Exit.triggered.connect(QApplication.quit)
 
         self.ui.action_ShowMap.triggered.connect(self.show_map)
         self.ui.action_BoltChecker.triggered.connect(self.show_boltchecker)
@@ -144,7 +144,7 @@ class MainWindow(QMainWindow):
         assert self.file_data
         tag = cast(str, index.data())
         dialog = EditDialog(tag, self.file_data[tag], self)
-        result = dialog.exec_()
+        result = dialog.exec()
         if result == QDialog.DialogCode.Accepted:
             dialog_result = dialog.get_value()
             if self.file_data[tag].value == dialog_result:
@@ -159,12 +159,12 @@ class MainWindow(QMainWindow):
 
     def show_map(self):
         dialog = MapViewDialog(self.file_data, self)
-        dialog.exec_()
+        dialog.exec()
 
     def show_boltchecker(self):
         dialog = BoltCheckerDialog(self.file_data, self)
-        dialog.exec_()
+        dialog.exec()
 
     def show_error(self, exception: Exception):
         dialog = ErrorDialog(exception, self)
-        dialog.exec_()
+        dialog.exec()

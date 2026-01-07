@@ -1,7 +1,7 @@
 from typing import Any
 
-from PyQt5.QtWidgets import QDialog
-from PyQt5.uic import loadUi
+from PyQt6.QtWidgets import QDialog
+from PyQt6.uic.load_ui import loadUi
 
 from msc.es2.types import ES2Field
 

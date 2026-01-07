@@ -1,4 +1,4 @@
-from PyQt5.QtCore import Qt, QAbstractItemModel, QModelIndex
+from PyQt6.QtCore import Qt, QAbstractItemModel, QModelIndex
 
 from msc.es2.enums import ES2Key, ES2ValueType
 

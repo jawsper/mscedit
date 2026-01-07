@@ -3,8 +3,8 @@ import re
 
 from tabulate import tabulate
 
-from PyQt5.QtWidgets import QDialog
-from PyQt5.uic import loadUi
+from PyQt6.QtWidgets import QDialog
+from PyQt6.uic.load_ui import loadUi
 
 
 class BoltablePart:
@@ -37,7 +37,7 @@ class BoltCheckerDialog(QDialog):
 
         self.find_boltables()
 
-        # from PyQt5.QtWidgets import QTreeWidgetItem
+        # from PyQt6.QtWidgets import QTreeWidgetItem
 
         # self.table = []
         # for part in self.boltable_parts:

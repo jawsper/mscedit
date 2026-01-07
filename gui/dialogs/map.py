@@ -1,9 +1,9 @@
 from itertools import cycle
 
-from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtWidgets import QDialog
-from PyQt5.QtGui import QPixmap, QPainter, QPen
-from PyQt5.uic import loadUi
+from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtWidgets import QDialog
+from PyQt6.QtGui import QPixmap, QPainter, QPen
+from PyQt6.uic.load_ui import loadUi
 
 from msc.es2 import ES2ValueType
 

@@ -1,9 +1,9 @@
 import logging
 from typing import Any
 
-from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QPixmap
+from PyQt6.QtWidgets import (
     QWidget,
     QCheckBox,
     QLineEdit,
@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QLabel,
 )
-from PyQt5.uic import loadUi
+from PyQt6.uic.load_ui import loadUi
 
 from msc.es2 import ES2Key, ES2ValueType
 from msc.es2.types import (
