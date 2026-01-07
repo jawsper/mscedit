@@ -221,9 +221,10 @@ class ES2Reader:
     def _read_type(self, value_type: ES2ValueType):
         try:
             func_name = f"read_{value_type.name}"
-            return getattr(self, func_name)()
+            func = getattr(self, func_name)
         except AttributeError:
             raise NotImplementedError(f"Value type {value_type} not implemented")
+        return func()
 
     def read(self, fmt: str) -> Any:
         expected_size = struct.calcsize(fmt)
