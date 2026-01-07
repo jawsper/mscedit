@@ -18,6 +18,18 @@ from .dialogs import BoltCheckerDialog, EditDialog, ErrorDialog, MapViewDialog
 logger = logging.getLogger(__name__)
 
 
+def _copy_file(src, dst):
+    shutil.copyfile(src, dst)
+    try:
+        shutil.copystat(src, dst)
+    except OSError:
+        logger.exception("Cannot copy stat")
+    try:
+        shutil.copymode(src, dst)
+    except OSError:
+        logger.exception("Cannot copy mode")
+
+
 class MainWindow(QMainWindow):
     file_data: dict[str, ES2Field]
 
@@ -83,7 +95,7 @@ class MainWindow(QMainWindow):
         for i in range(100):
             backup_filename = f"{self.filename}.{i}"
             if not os.path.exists(backup_filename):
-                shutil.copy2(self.filename, backup_filename)
+                _copy_file(self.filename, backup_filename)
                 break
         else:
             raise Exception("Too many backups!")
@@ -94,7 +106,7 @@ class MainWindow(QMainWindow):
                 writer.save(k, v)
             writer.save_all()
 
-            shutil.copy2(f.name, self.filename)
+            _copy_file(f.name, self.filename)
 
         self.set_changed(False)
 
