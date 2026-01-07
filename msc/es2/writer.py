@@ -26,16 +26,13 @@ class ES2Writer:
     def write_byte(self, param: int):
         self.write("B", param)
 
-    def write_int(self, param: int):
-        self.write_int32(param)
-
-    def write_int32(self, param: int):
+    def write_uint32(self, param: int):
         """
         Writes an unsigned 32-bit integer
         """
         self.write("I", param)
 
-    def write_sint32(self, param, int):
+    def write_int32(self, param: int):
         """
         Writes a signed 32-bit integer
         """
@@ -110,11 +107,11 @@ class ES2Writer:
 
     def write_texture2d(self, texture: Texture2D):
         self.write_byte(6)
-        self.write_sint32(len(texture.image))
+        self.write_int32(len(texture.image))
         self.stream.write(texture.image)
-        self.write_sint32(texture.filter_mode)
-        self.write_sint32(texture.aniso_level)
-        self.write_sint32(texture.wrap_mode)
+        self.write_int32(texture.filter_mode)
+        self.write_int32(texture.aniso_level)
+        self.write_int32(texture.wrap_mode)
         self.write_float(texture.mip_map_bias)
 
     def write(self, fmt, *param):
@@ -168,9 +165,9 @@ class ES2Writer:
         if collection_type != ES2Key.Null:
             self.write_byte(collection_type.value)
         self.write_byte(255)
-        self.write_int32(value_type.value)
+        self.write_uint32(value_type.value)
         if key_type is not None and key_type != ES2ValueType.Null:
-            self.write_int32(key_type.value)
+            self.write_uint32(key_type.value)
 
         return length_position
 
