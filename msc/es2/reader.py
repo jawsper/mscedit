@@ -25,7 +25,7 @@ class ES2Reader:
         self.stream = stream
         self.current_tag = ES2Tag()
 
-    def next(self):
+    def next(self) -> bool:
         self.stream.seek(self.current_tag.next_tag_position)
         self.current_tag.position = self.stream.tell()
         try:
@@ -148,13 +148,13 @@ class ES2Reader:
                 transform.layer = self.read_string()
         return transform
 
-    def read_vector2(self):
+    def read_vector2(self) -> tuple[float, float]:
         return self.read("ff")
 
     def read_vector3(self):
         return Vector3(*self.read("fff"))
 
-    def read_vector4(self):
+    def read_vector4(self) -> tuple[float, float, float, float]:
         return self.read("ffff")
 
     def read_quaternion(self):
@@ -211,21 +211,21 @@ class ES2Reader:
             texture.mip_map_bias = self.read_float()
         return texture
 
-    def _read_array(self, type):
+    def _read_array(self, type: ES2ValueType):
         array = []
         count = self.read_int()
         for i in range(count):
             array.append(self._read_type(type))
         return array
 
-    def _read_type(self, value_type):
+    def _read_type(self, value_type: ES2ValueType):
         try:
             func_name = f"read_{value_type.name}"
             return getattr(self, func_name)()
         except AttributeError:
             raise NotImplementedError(f"Value type {value_type} not implemented")
 
-    def read(self, fmt) -> Any:
+    def read(self, fmt: str) -> Any:
         expected_size = struct.calcsize(fmt)
         data = self.stream.read(expected_size)
         if len(data) != expected_size:
@@ -237,7 +237,7 @@ class ES2Reader:
             return val[0]
         return val
 
-    def read_header(self):
+    def read_header(self) -> ES2Header:
         collection_type = ES2Key.Null
         key_type = ES2ValueType.Null
         value_type = ES2ValueType.Null
