@@ -1,39 +1,22 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import struct
 from typing import Any
 
 from msc.es2.enums import ES2Key, ES2ValueType
 
 
+@dataclass
 class ES2HeaderSettings:
-    encrypt: bool
-    debug: bool
-
-    def __init__(self, encrypt: bool = False, debug: bool = False):
-        self.encrypt = encrypt
-        self.debug = debug
+    encrypt: bool = False
+    debug: bool = False
 
 
+@dataclass
 class ES2Header:
-    collection_type: ES2Key
-    key_type: ES2ValueType
-    value_type: ES2ValueType
-    settings: ES2HeaderSettings
-
-    def __init__(
-        self,
-        collection_type: ES2Key,
-        key_type: ES2ValueType,
-        value_type: ES2ValueType,
-        settings: ES2HeaderSettings,
-    ):
-        self.collection_type = collection_type
-        self.key_type = key_type
-        self.value_type = value_type
-        self.settings = settings
-
-    def __repr__(self):
-        return f"ES2Header({self.collection_type})"
+    collection_type: ES2Key = ES2Key.Null
+    key_type: ES2ValueType = ES2ValueType.Null
+    value_type: ES2ValueType = ES2ValueType.Null
+    settings: ES2HeaderSettings = field(default_factory=ES2HeaderSettings)
 
 
 class ES2Tag:
@@ -88,13 +71,11 @@ class ES2Transform:
         return f"ES2Transform({self.position}, {self.rotation}, {self.scale}, {self.layer})"
 
 
+@dataclass
 class ES2Field:
     header: ES2Header
     value: Any
 
-    def __init__(self, header: ES2Header, value: Any):
-        self.header = header
-        self.value = value
 
 
 class MeshSettings:
