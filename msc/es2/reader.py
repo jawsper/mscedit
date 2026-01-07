@@ -29,12 +29,12 @@ class ES2Reader:
         self.stream.seek(self.current_tag.next_tag_position)
         self.current_tag.position = self.stream.tell()
         try:
-            b = self.read_byte()
+            chunk_start_byte = self.read_byte()
         except EOFError:
             return False
-        if b != ES2Key.Tag.value:
+        if chunk_start_byte != ES2Key.Tag.value:
             raise ES2InvalidDataException(
-                f"Encountered invalid byte '{b}' when reading next tag, expected '{ES2Key.Tag.value}'."
+                f"Encountered invalid byte '{chunk_start_byte}' when reading next tag, expected '{ES2Key.Tag.value}'."
             )
         self.current_tag.tag = self.read_string()
         self.current_tag.next_tag_position = self.read_int() + self.stream.tell()
@@ -54,18 +54,18 @@ class ES2Reader:
                 raise NotImplementedError("Cannot deal with encryption sorry.")
             match header.collection_type:
                 case ES2Key.List:
-                    self.read_byte()
-                    num = self.read_int()
+                    self.read_byte()  # always zero
+                    list_len = self.read_int32()
                     val = []
-                    for i in range(num):
+                    for _ in range(list_len):
                         val.append(self._read_type(header.value_type))
                     data[self.current_tag.tag] = val
                 case ES2Key.Dictionary:
-                    self.read_byte()
-                    self.read_byte()
+                    self.read_byte()  # always zero
+                    self.read_byte()  # always zero
                     val = {}
-                    num = self.read_int()
-                    for i in range(num):
+                    dictionary_len = self.read_int32()
+                    for _ in range(dictionary_len):
                         k = self._read_type(header.key_type)
                         v = self._read_type(header.value_type)
                         val[k] = v
@@ -170,8 +170,8 @@ class ES2Reader:
         mesh.triangles = self._read_array(ES2ValueType.int)
         if mesh_settings.save_submeshes:
             mesh.submesh_count = self.read_int()
-            for i in range(mesh.submesh_count):
-                mesh.set_triangles(self._read_array(ES2ValueType.int), i)
+            for submesh_id in range(mesh.submesh_count):
+                mesh.set_triangles(self._read_array(ES2ValueType.int), submesh_id)
         if mesh_settings.save_skinning:
             mesh.bind_poses = self._read_array(ES2ValueType.matrix4x4)
             mesh.bone_weights = self._read_array(ES2ValueType.boneweight)
@@ -214,7 +214,7 @@ class ES2Reader:
     def _read_array(self, type: ES2ValueType):
         array = []
         count = self.read_int()
-        for i in range(count):
+        for _ in range(count):
             array.append(self._read_type(type))
         return array
 
