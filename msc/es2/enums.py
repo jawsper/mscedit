@@ -25,7 +25,7 @@ class ES2ValueTypeMap(str, Enum):
     byte = "System.Byte"
     bool = "System.Boolean"
     string = "System.String"
-    int = "System.Int32"
+    int32 = "System.Int32"
     float = "System.Single"
     boneweight = "UnityEngine.BoneWeight"
     color = "UnityEngine.Color"
@@ -44,7 +44,7 @@ class ES2ValueType(IntEnum):
     byte = 916439771
     bool = 2907536540
     string = 4259967470
-    int = 3802662998
+    int32 = 3802662998
     float = 1849612139
     boneweight = 1899243194
     color = 852446001
