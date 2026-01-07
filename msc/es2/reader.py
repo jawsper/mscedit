@@ -82,27 +82,31 @@ class ES2Reader:
             )
         return data
 
-    def read_string(self):
-        strlen = self.read_7bit_encoded_int()
+    def read_string(self) -> str:
+        strlen = self._read_7bit_encoded_int()
         if strlen < 0:
             raise Exception("Invalid string")
         if strlen == 0:
             return ""
-        if strlen > 127:
-            # todo: implement longer strings (is it even hard?)
-            raise NotImplementedError("Long strings not supported yet")
         return self.stream.read(strlen).decode("utf8")
 
-    def read_7bit_encoded_int(self):
-        num = 0
-        num2 = 0
-        while num2 != 35:
+    def _read_7bit_encoded_int(self) -> int:
+        """
+        Read a 7-bit encoded integer.
+
+        This is a data structure that allows for storing integers in a way that smaller numbers take less space.
+        
+        Rewrote in pythonic style based on:
+        https://github.com/microsoft/referencesource/blob/ec9fa9ae770d522a5b5f0607898044b7478574a3/mscorlib/system/io/binaryreader.cs#L582
+        """
+        str_len = 0
+        # Read no more than 5 bytes, moving 7 bits at a time
+        for shift in range(0, 5 * 7, 7):
             b = self.read_byte()
-            num |= (b & 127) << num2
-            num2 += 7
+            str_len = (b & 127) << shift
             if (b & 128) == 0:
-                return num
-        raise Exception("Format_Bad7BitInt32")
+                return str_len
+        raise ValueError("Invalid value for 7-bit encoded string length.")
 
     def read_int(self) -> int:
         """

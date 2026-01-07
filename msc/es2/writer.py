@@ -18,7 +18,7 @@ from .enums import ES2Key, ES2ValueType
 class ES2Writer:
     def __init__(self, stream: BinaryIO):
         self.stream = stream
-        self.data = OrderedDict()
+        self.data: dict[str, ES2Field] = OrderedDict()
 
     def write_bool(self, param: bool):
         self.write("?", param)
@@ -47,15 +47,21 @@ class ES2Writer:
     def write_str(self, param: str):
         self.write_string(param)
 
-    def write_string(self, param):
-        param = param.encode("utf8")
-        if len(param) > 127:
-            raise NotImplementedError("Cannot write strings longer than 127 bytes.")
-        self.write_7bit_encoded_int(len(param))
-        self.write(param)
+    def write_string(self, param: str):
+        encoded_string = param.encode("utf8")
+        self._write_7bit_encoded_int(len(encoded_string))
+        self.write(encoded_string)
 
-    def write_7bit_encoded_int(self, param: int):
-        self.write("B", param)
+    def _write_7bit_encoded_int(self, param: int):
+        """
+        Write out a 7-bit encoded integer.
+
+        See https://github.com/microsoft/referencesource/blob/ec9fa9ae770d522a5b5f0607898044b7478574a3/mscorlib/system/io/binarywriter.cs#L414
+        """
+        while param >= 0x80:
+            self.write_byte(param | 0x80)
+            param >>= 7
+        self.write_byte(param)
 
     def write_color(self, param: ES2Color):
         self.write("ffff", *param.color)
@@ -177,22 +183,21 @@ class ES2Writer:
     def _write_terminator(self):
         self.write_byte(ES2Key.Terminator.value)
 
-    def save(self, key, value):
-        self.data[key] = value
+    def save(self, tag: str, value: ES2Field):
+        self.data[tag] = value
 
     def save_all(self):
-        field: ES2Field
-        for k, field in self.data.items():
+        for tag, field in self.data.items():
             header, value = field.header, field.value
             self.debug = header.settings.debug
             if self.debug:
-                print(type(value).__name__, k)
+                print(type(value).__name__, tag)
 
             collection_type = header.collection_type
             value_type = header.value_type
             key_type = header.key_type
             length_position = self._write_header(
-                k, collection_type, value_type, key_type
+                tag, collection_type, value_type, key_type
             )
 
             match collection_type:
@@ -203,10 +208,10 @@ class ES2Writer:
                 case ES2Key.Null:
                     self._write_type(value_type, value)
                 case _:
-                    print(k)
+                    print(tag)
                     raise NotImplementedError(
                         f"Collection type not implemented: {collection_type.name}"
                     )
 
             self._write_terminator()
-            self._write_length(length_position)
+            self._write_length(length_position) 
