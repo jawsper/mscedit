@@ -10,13 +10,15 @@ from .types import (
     ES2HeaderSettings,
     ES2Tag,
     ES2Field,
-    ES2Color,
-    ES2Transform,
-    Vector3,
-    Quaternion,
+)
+from .unity import (
+    Color,
     MeshSettings,
     Mesh,
+    Quaternion,
     Texture2D,
+    Transform,
+    Vector3,
 )
 
 
@@ -95,7 +97,7 @@ class ES2Reader:
         Read a 7-bit encoded integer.
 
         This is a data structure that allows for storing integers in a way that smaller numbers take less space.
-        
+
         Rewrote in pythonic style based on:
         https://github.com/microsoft/referencesource/blob/ec9fa9ae770d522a5b5f0607898044b7478574a3/mscorlib/system/io/binaryreader.cs#L582
         """
@@ -133,10 +135,10 @@ class ES2Reader:
         return bool(self.read_byte())
 
     def read_color(self):
-        return ES2Color(*self.read("ffff"))
+        return Color(*self.read("ffff"))
 
     def read_transform(self):
-        transform = ES2Transform()
+        transform = Transform()
         for i in range(self.read_byte()):
             if i == 0:
                 transform.position = self.read_vector3()

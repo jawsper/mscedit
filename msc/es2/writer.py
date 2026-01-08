@@ -2,17 +2,19 @@ from collections import OrderedDict
 import struct
 from typing import Any, BinaryIO
 
-from msc.es2.types import (
-    ES2Color,
+
+from .enums import ES2Key, ES2ValueType
+from .types import (
     ES2Field,
-    ES2Transform,
+)
+from .unity import (
+    Color,
     Mesh,
     Quaternion,
     Vector3,
     Texture2D,
+    Transform,
 )
-
-from .enums import ES2Key, ES2ValueType
 
 
 class ES2Writer:
@@ -60,27 +62,27 @@ class ES2Writer:
             param >>= 7
         self.write_byte(param)
 
-    def write_color(self, param: ES2Color):
-        self.write("ffff", *param.color)
+    def write_color(self, param: Color):
+        self.write("ffff", param.r, param.g, param.b, param.a)
 
-    def write_transform(self, param: ES2Transform):
+    def write_transform(self, param: Transform):
         self.write_byte(4)
         self.write_vector3(param.position)
         self.write_quaternion(param.rotation)
         self.write_vector3(param.scale)
         self.write_string(param.layer)
 
-    def write_vector2(self, param):
+    def write_vector2(self, param: tuple[float, float]):
         self.write("ff", *param)
 
     def write_vector3(self, param: Vector3):
-        self.write("fff", *param.list())
+        self.write("fff", param.x, param.y, param.z)
 
-    def write_vector4(self, param):
+    def write_vector4(self, param: tuple[float, float, float, float]):
         self.write("ffff", *param)
 
     def write_quaternion(self, param: Quaternion):
-        self.write("ffff", *param.list())
+        self.write("ffff", param.x, param.y, param.z, param.w)
 
     def write_mesh(self, param: Mesh):
         assert param.settings is not None
@@ -211,4 +213,4 @@ class ES2Writer:
                     )
 
             self._write_terminator()
-            self._write_length(length_position) 
+            self._write_length(length_position)

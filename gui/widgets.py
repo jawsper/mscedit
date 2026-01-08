@@ -13,14 +13,16 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.uic.load_ui import loadUi
 
-from msc.es2 import ES2Key, ES2ValueType
+from msc.es2.enums import ES2Key, ES2ValueType
 from msc.es2.types import (
     ES2Field,
-    ES2Transform,
-    ES2Color,
-    Vector3,
+)
+from msc.es2.unity import (
+    Color,
     Quaternion,
     Texture2D,
+    Transform,
+    Vector3,
 )
 
 logger = logging.getLogger(__name__)
@@ -140,13 +142,13 @@ class EditWidget(QWidget):
         layout.addWidget(field)
         yield groupbox
 
-    def _widget_color(self, label, value):
+    def _widget_color(self, label, value: Color):
         for component in ("r", "g", "b", "a"):
             val = getattr(value, component)
             widget = self.__widget_generic_textbox("", val)[0]
             yield widget
 
-    def _widget_vector3(self, label, value):
+    def _widget_vector3(self, label, value: Vector3):
         labels = ("x", "y", "z")
         for label, val in zip(labels, value.list()):
             field = QLineEdit()
@@ -241,7 +243,7 @@ class EditWidget(QWidget):
             for i in range(layout.count()):
                 widget = layout.itemAt(i).widget()
                 values.append(self._get_widget_result(widget, ES2ValueType.float))
-            return ES2Color(*values)
+            return Color(*values)
 
     def get_value(self):
         match self.item.header.collection_type:
