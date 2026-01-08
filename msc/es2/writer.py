@@ -88,11 +88,11 @@ class ES2Writer:
         assert param.settings is not None
         self.write(param.settings.get_bytes())
         self._write_array(ES2ValueType.vector3, param.vertices)
-        self._write_array(ES2ValueType.int, param.triangles)
+        self._write_array(ES2ValueType.int32, param.triangles)
         if param.settings.save_submeshes:
             self.write_int32(param.submesh_count)
             for i in range(param.submesh_count):
-                self._write_array(ES2ValueType.int, param.get_triangles(i))
+                self._write_array(ES2ValueType.int32, param.get_triangles(i))
         if param.settings.save_skinning:
             self._write_array(ES2ValueType.matrix4x4, param.bind_poses)
             self._write_array(ES2ValueType.boneweight, param.bone_weights)

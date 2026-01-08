@@ -169,11 +169,11 @@ class ES2Reader:
 
         mesh = Mesh()
         mesh.vertices = self._read_array(ES2ValueType.vector3)
-        mesh.triangles = self._read_array(ES2ValueType.int)
+        mesh.triangles = self._read_array(ES2ValueType.int32)
         if mesh_settings.save_submeshes:
             mesh.submesh_count = self.read_int32()
             for submesh_id in range(mesh.submesh_count):
-                mesh.set_triangles(self._read_array(ES2ValueType.int), submesh_id)
+                mesh.set_triangles(self._read_array(ES2ValueType.int32), submesh_id)
         if mesh_settings.save_skinning:
             mesh.bind_poses = self._read_array(ES2ValueType.matrix4x4)
             mesh.bone_weights = self._read_array(ES2ValueType.boneweight)

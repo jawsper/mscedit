@@ -202,7 +202,7 @@ class EditWidget(QWidget):
         elif value_type == ES2ValueType.float:
             return float(widget.text())
 
-        elif value_type == ES2ValueType.int:
+        elif value_type == ES2ValueType.int32:
             return int(widget.text())
 
         elif value_type == ES2ValueType.string:
