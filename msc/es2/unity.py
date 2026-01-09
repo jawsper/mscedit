@@ -76,10 +76,10 @@ class Quaternion:
 @dataclass
 class Texture2D:
     image: bytes
-    filter_mode: int | None = None
-    aniso_level: int | None = None
-    wrap_mode: int | None = None
-    mip_map_bias: float | None = None
+    filter_mode: int = 0
+    aniso_level: int = 0
+    wrap_mode: int = 0
+    mip_map_bias: float = 0.0
 
     def __str__(self):
         return f"Texture2D({len(self.image)} bytes)"
