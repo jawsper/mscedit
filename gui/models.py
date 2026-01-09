@@ -1,3 +1,5 @@
+from typing import Any
+
 from PyQt6.QtCore import Qt, QAbstractItemModel, QModelIndex
 
 from msc.es2.enums import ES2Key, ES2ValueType
@@ -52,13 +54,13 @@ class TreeModel(QAbstractItemModel):
 
         self.setupModelData(data, self.rootItem)
 
-    def columnCount(self, parent):
+    def columnCount(self, parent: QModelIndex) -> int:
         if parent.isValid():
             return parent.internalPointer().columnCount()
         else:
             return self.rootItem.columnCount()
 
-    def data(self, index, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole):
+    def data(self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole) -> Any:
         if not index.isValid():
             return None
 
@@ -69,7 +71,7 @@ class TreeModel(QAbstractItemModel):
 
         return item.data(index.column())
 
-    def setData(self, index, value, role: Qt.ItemDataRole = Qt.ItemDataRole.EditRole):
+    def setData(self, index: QModelIndex, value: Any, role: Qt.ItemDataRole = Qt.ItemDataRole.EditRole):
         if role == Qt.ItemDataRole.EditRole:
             row = index.row()
             child = self.rootItem.child(row)
@@ -84,7 +86,7 @@ class TreeModel(QAbstractItemModel):
 
         return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
 
-    def headerData(self, section, orientation: Qt.Orientation, role: Qt.ItemDataRole):
+    def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole):
         if (
             orientation == Qt.Orientation.Horizontal
             and role == Qt.ItemDataRole.DisplayRole
@@ -93,7 +95,7 @@ class TreeModel(QAbstractItemModel):
 
         return None
 
-    def index(self, row, column, parent):
+    def index(self, row: int, column: int, parent: QModelIndex):
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
 
@@ -108,7 +110,7 @@ class TreeModel(QAbstractItemModel):
         else:
             return QModelIndex()
 
-    def parent(self, index):
+    def parent(self, index: Any) -> QModelIndex:
         if not index.isValid():
             return QModelIndex()
 
@@ -120,7 +122,7 @@ class TreeModel(QAbstractItemModel):
 
         return self.createIndex(parentItem.row(), 0, parentItem)
 
-    def rowCount(self, parent):
+    def rowCount(self, parent: QModelIndex) -> int:
         if parent.column() > 0:
             return 0
 

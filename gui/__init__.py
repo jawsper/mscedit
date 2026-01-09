@@ -31,7 +31,7 @@ def _copy_file(src, dst):
 
 
 class MainWindow(QMainWindow):
-    file_data: dict[str, ES2Field]
+    file_data: dict[str, ES2Field] | None
 
     def __init__(self):
         super().__init__()

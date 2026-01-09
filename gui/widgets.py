@@ -1,8 +1,7 @@
 import logging
-from typing import Any
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QMouseEvent
 from PyQt6.QtWidgets import (
     QWidget,
     QCheckBox,
@@ -31,13 +30,13 @@ logger = logging.getLogger(__name__)
 class ClickableLabel(QLabel):
     mousePressed = pyqtSignal("QMouseEvent")
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent | None):
         self.mousePressed.emit(event)
 
 
 class EditWidget(QWidget):
-    tag: str
-    item: ES2Field
+    tag: str | None
+    item: ES2Field | None
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -184,7 +183,7 @@ class EditWidget(QWidget):
 
         return widgets
 
-    def _get_widget_result(self, wrapper, value_type, *, is_dict: bool = False):
+    def _get_widget_result(self, wrapper, value_type: ES2ValueType, *, is_dict: bool = False):
         layout = wrapper.layout()
         if layout:
             widget = layout.itemAt(0).widget()
