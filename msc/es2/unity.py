@@ -9,6 +9,8 @@ class Color:
     b: float
     a: float
 
+    def as_list(self):
+        return [self.r, self.g, self.b, self.a]
 
 class MeshSettings:
     def __init__(self, data: bytes):
@@ -72,6 +74,8 @@ class Quaternion:
     z: float = 0.0
     w: float = 0.0
 
+    def as_list(self):
+        return [self.x, self.y, self.z, self.w]
 
 @dataclass
 class Texture2D:
@@ -90,6 +94,9 @@ class Vector3:
     x: float = 0.0
     y: float = 0.0
     z: float = 0.0
+
+    def as_list(self):
+        return [self.x, self.y, self.z]
 
 
 @dataclass

@@ -89,7 +89,7 @@ class EditWidget(QWidget):
             wrapper_layout.addWidget(widget)
         self.get_widget_container().addWidget(wrapper)
 
-    def _widget_bool(self, label, value):
+    def _widget_bool(self, label, value: bool):
         widget = QCheckBox()
         widget.setChecked(value)
         widget.setText(label)
@@ -100,20 +100,20 @@ class EditWidget(QWidget):
         widget.setText(f"{value}")
         return [widget]
 
-    def _widget_float(self, label, value):
+    def _widget_float(self, label, value: float):
         return self.__widget_generic_textbox(label, value)
 
-    def _widget_int(self, label, value):
+    def _widget_int(self, label, value: int):
         return self.__widget_generic_textbox(label, value)
 
-    def _widget_string(self, label, value):
+    def _widget_string(self, label, value: str):
         return self.__widget_generic_textbox(label, value)
 
-    def _widget_transform(self, label, value):
+    def _widget_transform(self, label, value: Transform):
         groupbox = QGroupBox("Position")
         layout = QVBoxLayout()
         groupbox.setLayout(layout)
-        for val in value.position.list():
+        for val in value.position.as_list():
             field = self.__widget_generic_textbox("", val)[0]
             layout.addWidget(field)
         yield groupbox
@@ -121,7 +121,7 @@ class EditWidget(QWidget):
         groupbox = QGroupBox("Rotation")
         layout = QVBoxLayout()
         groupbox.setLayout(layout)
-        for val in value.rotation.list():
+        for val in value.rotation.as_list():
             field = self.__widget_generic_textbox("", val)[0]
             layout.addWidget(field)
         yield groupbox
@@ -129,7 +129,7 @@ class EditWidget(QWidget):
         groupbox = QGroupBox("Scale")
         layout = QVBoxLayout()
         groupbox.setLayout(layout)
-        for val in value.scale.list():
+        for val in value.scale.as_list():
             field = self.__widget_generic_textbox("", val)[0]
             layout.addWidget(field)
         yield groupbox
@@ -142,14 +142,14 @@ class EditWidget(QWidget):
         yield groupbox
 
     def _widget_color(self, label, value: Color):
-        for component in ("r", "g", "b", "a"):
-            val = getattr(value, component)
+        labels = ("r", "g", "b", "a")
+        for label, val in zip(labels, value.as_list()):
             widget = self.__widget_generic_textbox("", val)[0]
             yield widget
 
     def _widget_vector3(self, label, value: Vector3):
         labels = ("x", "y", "z")
-        for label, val in zip(labels, value.list()):
+        for label, val in zip(labels, value.as_list()):
             field = QLineEdit()
             field.setText(str(val))
             yield field
@@ -208,7 +208,7 @@ class EditWidget(QWidget):
             return widget.text()
 
         elif value_type == ES2ValueType.transform:
-            value = ES2Transform()
+            value = Transform()
             # print(layout.count())
             fields = (
                 ("position", ES2ValueType.vector3),
