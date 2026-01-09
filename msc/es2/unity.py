@@ -36,32 +36,32 @@ class MeshSettings:
         return struct.pack("B", len(self.raw)) + self.raw
 
 
+@dataclass
 class Mesh:
-    def __init__(self):
-        self.vertices = []
-        self.triangles = []
+    vertices: list = field(default_factory=list)
+    triangles: list = field(default_factory=list)
 
-        self.submesh_count = 0
-        self.submeshes = {}
+    submesh_count: int = 0
+    submeshes: dict = field(default_factory=dict)
 
-        self.bind_poses = []
-        self.bone_weights = []
+    bind_poses: list = field(default_factory=list)
+    bone_weights: list = field(default_factory=list)
 
-        self.normals = []
+    normals: list = field(default_factory=list)
 
-        self.uv = []
-        self.uv2 = []
+    uv: list = field(default_factory=list)
+    uv2: list = field(default_factory=list)
 
-        self.tangents = []
+    tangents: list = field(default_factory=list)
 
-        self.colors32 = []
+    colors32: list = field(default_factory=list)
 
-        self.settings: MeshSettings | None = None
+    settings: MeshSettings | None = None
 
-    def set_triangles(self, data, submesh_id):
+    def set_triangles(self, data, submesh_id: int):
         self.submeshes[submesh_id] = data
 
-    def get_triangles(self, submesh_id):
+    def get_triangles(self, submesh_id: int):
         return self.submeshes[submesh_id]
 
 
