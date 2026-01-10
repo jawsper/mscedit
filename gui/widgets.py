@@ -103,7 +103,7 @@ class EditWidget(QWidget):
     def _widget_float(self, label, value: float):
         return self.__widget_generic_textbox(label, value)
 
-    def _widget_int(self, label, value: int):
+    def _widget_int32(self, label, value: int):
         return self.__widget_generic_textbox(label, value)
 
     def _widget_string(self, label, value: str):
