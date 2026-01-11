@@ -1,7 +1,7 @@
 import logging
 
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QPixmap, QMouseEvent
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
     QWidget,
     QCheckBox,
@@ -25,13 +25,6 @@ from msc.es2.unity import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class ClickableLabel(QLabel):
-    mousePressed = pyqtSignal("QMouseEvent")
-
-    def mousePressEvent(self, event: QMouseEvent | None):
-        self.mousePressed.emit(event)
 
 
 class EditWidget(QWidget):
