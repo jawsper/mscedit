@@ -1,14 +1,17 @@
 from io import BytesIO
 import shutil
 
+import pytest
+
 from msc.es2.reader import ES2Reader
 from msc.es2.writer import ES2Writer
 
 
-def test_read_write_identical():
+@pytest.mark.parametrize("filename", ["simple", "complex", "carparts", "items2", "savefile", "speedcam"])
+def test_read_write_identical(filename: str):
     read_buffer = BytesIO()
     write_buffer = BytesIO()
-    with open("msc/tests/data/complex.txt", "rb") as src:
+    with open(f"msc/tests/data/{filename}.txt", "rb") as src:
         shutil.copyfileobj(src, read_buffer)
 
     read_buffer.seek(0)
