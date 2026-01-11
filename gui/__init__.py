@@ -100,11 +100,13 @@ class MainWindow(QMainWindow):
         else:
             raise Exception("Too many backups!")
 
-        with tempfile.NamedTemporaryFile("wb") as f:
-            writer = ES2Writer(f)
+        with tempfile.NamedTemporaryFile("wb", delete_on_close=False) as f:
+            writer = ES2Writer(f.file)
             for k, v in self.file_data.items():
                 writer.save(k, v)
             writer.save_all()
+
+            f.close()
 
             _copy_file(f.name, self.filename)
 
