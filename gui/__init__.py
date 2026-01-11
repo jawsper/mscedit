@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import sys
 import tempfile
 from typing import cast
 
@@ -41,6 +42,15 @@ class MainWindow(QMainWindow):
         self.file_data = None
 
         self.open_file_dir = "."  # os.path.expanduser("~")
+        match sys.platform:
+            case "win32":
+                self.open_file_dir = os.path.expandvars("%APPDATA%/../LocalLow/Amistech/My Winter Car")
+            case "darwin":
+                pass
+            case "linux":
+                pass
+            case _:
+                pass
 
         self.ui = loadUi("gui/MainWindow.ui", self)
         assert self.ui
