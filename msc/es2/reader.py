@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import struct
 from typing import Any, BinaryIO
 import logging
@@ -47,8 +46,8 @@ class ES2Reader:
         self.stream.seek(0)
         self.current_tag = ES2Tag()
 
-    def read_all(self) -> OrderedDict[str, ES2Field]:
-        data = OrderedDict()
+    def read_all(self) -> dict[str, ES2Field]:
+        data = {}
         self.reset()
         while self.next():
             header = self.read_header()

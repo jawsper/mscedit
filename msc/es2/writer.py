@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import struct
 from typing import Any, BinaryIO
 
@@ -20,7 +19,7 @@ from .unity import (
 class ES2Writer:
     def __init__(self, stream: BinaryIO):
         self.stream = stream
-        self.data: dict[str, ES2Field] = OrderedDict()
+        self.data: dict[str, ES2Field] = {}
 
     def write_bool(self, param: bool):
         self.write("?", param)
