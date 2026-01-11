@@ -6,6 +6,11 @@ from msc.es2.enums import ES2Key, ES2ValueType
 from msc.es2.types import ES2Field
 
 
+def _truncate_value(value: str):
+    if len(value) > 75:
+        return value[:75] + "..."
+    return value
+
 class TreeItem(object):
     def __init__(self, data, parent=None):
         self.parentItem = parent
@@ -76,7 +81,7 @@ class TreeModel(QAbstractItemModel):
         if role == Qt.ItemDataRole.EditRole:
             row = index.row()
             child: TreeItem = self.rootItem.child(row)
-            child.setData(index.column(), str(value))
+            child.setData(index.column(), _truncate_value(str(value)))
             self.dataChanged.emit(index, index)
             return True
         return False
@@ -148,7 +153,7 @@ class TreeModel(QAbstractItemModel):
             else:
                 header_text = header.value_type.name
             parents[-1].appendChild(
-                TreeItem([tag, header_text, str(entry.value)], parents[-1])
+                TreeItem([tag, header_text, _truncate_value(str(entry.value))], parents[-1])
             )
 
         # indentations = [0]
