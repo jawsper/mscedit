@@ -1,9 +1,11 @@
-from typing import Any
+from typing import Any, cast
 
 from PyQt6.QtWidgets import QDialog
 from PyQt6.uic.load_ui import loadUi
 
 from msc.es2.types import ES2Field
+
+from gui.widgets import EditWidget
 
 
 class EditDialog(QDialog):
@@ -17,8 +19,9 @@ class EditDialog(QDialog):
         self.item = item
 
         self.ui = loadUi("gui/EditDialog.ui", self)
-        self.ui.widget.set_tag(tag)
-        self.ui.widget.set_item(item)
+        widget = cast(EditWidget, self.ui.widget)
+        widget.set_tag(tag)
+        widget.set_item(item)
 
     def get_value(self):
         return self.ui.widget.get_value()

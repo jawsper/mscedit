@@ -274,5 +274,5 @@ class EditWidget(QWidget):
                 )
         logger.warning("No value was returned.")
 
-    def get_widget_container(self):
-        return self.ui.editWidgetsContainer.layout()
+    def get_widget_container(self) -> QVBoxLayout:
+        return self.ui.verticalLayout_2

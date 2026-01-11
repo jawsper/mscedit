@@ -1,5 +1,5 @@
 import struct
-from typing import Any, BinaryIO
+from typing import Any, BinaryIO, IO
 
 
 from .enums import ES2Key, ES2ValueType
@@ -17,7 +17,7 @@ from .unity import (
 
 
 class ES2Writer:
-    def __init__(self, stream: BinaryIO):
+    def __init__(self, stream: BinaryIO | IO[bytes]):
         self.stream = stream
         self.data: dict[str, ES2Field] = {}
 

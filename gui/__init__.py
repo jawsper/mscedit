@@ -138,7 +138,7 @@ class MainWindow(QMainWindow):
             else Qt.CaseSensitivity.CaseInsensitive
         )
 
-    def update_tree(self, file_data=None):
+    def update_tree(self, file_data: dict[str, ES2Field] | None = None):
         assert self.ui
         self.datamodel.setSourceModel(TreeModel(file_data))
         self.ui.treeView.sortByColumn(0, Qt.SortOrder.AscendingOrder)

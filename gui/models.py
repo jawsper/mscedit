@@ -3,6 +3,7 @@ from typing import Any
 from PyQt6.QtCore import Qt, QAbstractItemModel, QModelIndex
 
 from msc.es2.enums import ES2Key, ES2ValueType
+from msc.es2.types import ES2Field
 
 
 class TreeItem(object):
@@ -45,7 +46,7 @@ class TreeItem(object):
 
 
 class TreeModel(QAbstractItemModel):
-    def __init__(self, data, parent=None):
+    def __init__(self, data: dict[str, ES2Field] | None, parent=None):
         super(TreeModel, self).__init__(parent)
 
         self.rootItem = TreeItem(["Tag", "Type", "Value"])
@@ -74,7 +75,7 @@ class TreeModel(QAbstractItemModel):
     def setData(self, index: QModelIndex, value: Any, role: Qt.ItemDataRole = Qt.ItemDataRole.EditRole):
         if role == Qt.ItemDataRole.EditRole:
             row = index.row()
-            child = self.rootItem.child(row)
+            child: TreeItem = self.rootItem.child(row)
             child.setData(index.column(), str(value))
             self.dataChanged.emit(index, index)
             return True
@@ -133,7 +134,7 @@ class TreeModel(QAbstractItemModel):
 
         return parentItem.childCount()
 
-    def setupModelData(self, data, parent):
+    def setupModelData(self, data: dict[str, ES2Field], parent: TreeItem):
         parents = [parent]
         for tag, entry in data.items():
             header = entry.header
