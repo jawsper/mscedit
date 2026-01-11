@@ -59,6 +59,7 @@ class MainWindow(QMainWindow):
         self.ui.action_Save.triggered.connect(self.menu_save)
         self.ui.action_Close.triggered.connect(self.menu_close)
         self.ui.action_Exit.triggered.connect(QApplication.quit)
+        self.ui.action_CaseSensitive.triggered.connect(self.menu_search_mode)
 
         self.ui.action_ShowMap.triggered.connect(self.show_map)
         self.ui.action_BoltChecker.triggered.connect(self.show_boltchecker)
@@ -129,6 +130,13 @@ class MainWindow(QMainWindow):
         self.filename = None
         self.file_data = None
         self.update_tree(None)
+
+    def menu_search_mode(self, action: bool):
+        self.datamodel.setFilterCaseSensitivity(
+            Qt.CaseSensitivity.CaseSensitive
+            if action
+            else Qt.CaseSensitivity.CaseInsensitive
+        )
 
     def update_tree(self, file_data=None):
         assert self.ui
