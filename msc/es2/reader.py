@@ -268,7 +268,7 @@ class ES2Reader:
                 return ES2Header(collection_type, key_type, value_type, settings)
             elif b >= 101:
                 break
-            elif b == ES2Key.Dictionary.value:
+            else:
                 collection_type = ES2Key(b)
                 if collection_type == ES2Key.Dictionary:
                     b2 = self.read_byte()
