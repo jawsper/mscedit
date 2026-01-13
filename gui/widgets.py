@@ -188,54 +188,53 @@ class EditWidget(QWidget):
             value = self._get_widget_result(widget, value_type)
             return key, value
 
-        if value_type == ES2ValueType.bool:
-            return widget.isChecked()
+        match value_type:
+            case ES2ValueType.bool:
+                return widget.isChecked()
 
-        elif value_type == ES2ValueType.float:
-            return float(widget.text())
+            case ES2ValueType.float:
+                return float(widget.text())
 
-        elif value_type == ES2ValueType.int32:
-            return int(widget.text())
+            case ES2ValueType.int32:
+                return int(widget.text())
 
-        elif value_type == ES2ValueType.string:
-            return widget.text()
+            case ES2ValueType.string:
+                return widget.text()
 
-        elif value_type == ES2ValueType.transform:
-            value = Transform()
-            # print(layout.count())
-            fields = (
-                ("position", ES2ValueType.vector3),
-                ("rotation", ES2ValueType.quaternion),
-                ("scale", ES2ValueType.vector3),
-                ("layer", ES2ValueType.string),
-            )
-            for i, field in enumerate(fields):
-                group = layout.itemAt(i).widget()
-                field_name, field_type = field
-                result = self._get_widget_result(group, field_type)
-                setattr(value, field_name, result)
-            return value
+            case ES2ValueType.transform:
+                value = Transform()
+                fields = (
+                    ("position", ES2ValueType.vector3),
+                    ("rotation", ES2ValueType.quaternion),
+                    ("scale", ES2ValueType.vector3),
+                    ("layer", ES2ValueType.string),
+                )
+                for i, (field_name, field_type) in enumerate(fields):
+                    group = layout.itemAt(i).widget()
+                    result = self._get_widget_result(group, field_type)
+                    setattr(value, field_name, result)
+                return value
 
-        elif value_type == ES2ValueType.vector3:
-            values = []
-            for i in range(layout.count()):
-                widget = layout.itemAt(i).widget()
-                values.append(self._get_widget_result(widget, ES2ValueType.float))
-            return Vector3(*values)
+            case ES2ValueType.vector3:
+                values = []
+                for i in range(layout.count()):
+                    widget = layout.itemAt(i).widget()
+                    values.append(self._get_widget_result(widget, ES2ValueType.float))
+                return Vector3(*values)
 
-        elif value_type == ES2ValueType.quaternion:
-            values = []
-            for i in range(layout.count()):
-                widget = layout.itemAt(i).widget()
-                values.append(self._get_widget_result(widget, ES2ValueType.float))
-            return Quaternion(*values)
+            case ES2ValueType.quaternion:
+                values = []
+                for i in range(layout.count()):
+                    widget = layout.itemAt(i).widget()
+                    values.append(self._get_widget_result(widget, ES2ValueType.float))
+                return Quaternion(*values)
 
-        elif value_type == ES2ValueType.color:
-            values = []
-            for i in range(layout.count()):
-                widget = layout.itemAt(i).widget()
-                values.append(self._get_widget_result(widget, ES2ValueType.float))
-            return Color(*values)
+            case ES2ValueType.color:
+                values = []
+                for i in range(layout.count()):
+                    widget = layout.itemAt(i).widget()
+                    values.append(self._get_widget_result(widget, ES2ValueType.float))
+                return Color(*values)
 
     def get_value(self):
         match self.item.header.collection_type:
