@@ -75,6 +75,7 @@ class MapViewDialog(QDialog):
         self.ui = loadUi("gui/MapViewDialog.ui", self)
         assert self.ui
         self.ui.addItemButton.clicked.connect(self.button_add_clicked)
+        self.ui.addAllItemsButton.clicked.connect(self.button_add_all_clicked)
         self.ui.clearButton.clicked.connect(self.button_clear_clicked)
         self.ui.zoomInButton.clicked.connect(self.zoom_in)
         self.ui.zoomOutButton.clicked.connect(self.zoom_out)
@@ -136,6 +137,13 @@ class MapViewDialog(QDialog):
             return
         position = item.value.position
         self._map.add_marker(tag, position.x, position.z)
+
+    def button_add_all_clicked(self):
+        for tag, item in self.model.items():
+            if item.header.value_type != ES2ValueType.transform:
+                continue
+            position = item.value.position
+            self._map.add_marker(tag, position.x, position.z)
 
     def button_clear_clicked(self):
         self._map.clear_markers()
