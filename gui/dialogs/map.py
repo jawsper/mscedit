@@ -23,8 +23,11 @@ class MapWidget(QWidget):
         qp.drawPixmap(0, 0, self.background)
 
         point = QPoint()
+        text_offset = QPoint()
+        text_offset.setX(5)
+        text_offset.setY(5)
         pen = QPen(Qt.GlobalColor.red)
-        pen.setWidth(10)
+        pen.setWidth(5)
         colors = cycle(
             [
                 Qt.GlobalColor.magenta,
@@ -35,12 +38,13 @@ class MapWidget(QWidget):
                 Qt.GlobalColor.cyan,
             ]
         )
-        for marker in self.markers.values():
+        for tag, marker in self.markers.items():
             pen.setColor(next(colors))
             qp.setPen(pen)
             point.setX(marker[0])
             point.setY(marker[1])
             qp.drawPoint(point)
+            qp.drawText(point + text_offset, tag)
 
     def add_marker(self, tag: str, x_pos: float, y_pos: float):
         if tag in self.markers:
