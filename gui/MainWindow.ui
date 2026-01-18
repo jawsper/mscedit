@@ -49,6 +49,7 @@
      <string>&amp;File</string>
     </property>
     <addaction name="action_Open"/>
+    <addaction name="actionOpen_folder"/>
     <addaction name="action_Save"/>
     <addaction name="action_Close"/>
     <addaction name="separator"/>
@@ -132,6 +133,11 @@
   <action name="action_BoltChecker">
    <property name="text">
     <string>&amp;Bolt checker</string>
+   </property>
+  </action>
+  <action name="actionOpen_folder">
+   <property name="text">
+    <string>Open &amp;folder</string>
    </property>
   </action>
  </widget>

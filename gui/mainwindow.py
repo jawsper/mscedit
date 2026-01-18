@@ -63,6 +63,7 @@ class MainWindow(QMainWindow):
         assert self.ui
 
         self.ui.action_Open.triggered.connect(self.menu_open)
+        self.ui.actionOpen_folder.triggered.connect(self.menu_open_folder)
         self.ui.action_Save.triggered.connect(self.menu_save)
         self.ui.action_Close.triggered.connect(self.menu_close)
         self.ui.action_Exit.triggered.connect(QApplication.quit)
@@ -85,6 +86,19 @@ class MainWindow(QMainWindow):
         filenames, _ = QFileDialog.getOpenFileNames(self, "Open files", self.open_file_dir, filter="TXT-files (*.txt);;All files (*.*)")
         for filename in filenames:
             self.open_file(Path(filename).resolve())
+
+    def menu_open_folder(self):
+        """
+        Slot that gets triggered by the "Open folder" menu item.
+        """
+        folder = QFileDialog.getExistingDirectory(
+            self, "Open folder", str(self.open_file_dir)
+        )
+        if folder:
+            path = Path(folder)
+            txt_files = path.glob("*.txt")
+            for filename in txt_files:
+                self.open_file(filename)
 
     def open_file(self, filename: Path):
         if filename in self.open_files:
