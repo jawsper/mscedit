@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import cast
 
 from PyQt6.QtCore import Qt, QModelIndex, QSortFilterProxyModel, pyqtSignal
@@ -10,13 +11,13 @@ from ..models import TreeModel
 
 
 class TableWidget(QWidget):
-    filename: str
+    filename: Path
     file_data: dict[str, ES2Field]
     changed: bool = False
 
     data_changed = pyqtSignal(bool)
 
-    def __init__(self, parent=None, *, filename: str, data: dict[str, ES2Field]):
+    def __init__(self, parent=None, *, filename: Path, data: dict[str, ES2Field]):
         super().__init__(parent)
 
         self.filename = filename

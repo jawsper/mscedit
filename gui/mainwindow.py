@@ -1,6 +1,7 @@
 from functools import partial
 import logging
 import os
+from pathlib import Path
 import shutil
 import sys
 import tempfile
@@ -38,17 +39,17 @@ def _copy_file(src, dst):
 
 
 class MainWindow(QMainWindow):
-    open_file_dir: str
-    open_files: set[str]
+    open_file_dir: Path
+    open_files: set[Path]
 
     def __init__(self):
         super().__init__()
 
-        self.open_file_dir = "."  # os.path.expanduser("~")
+        self.open_file_dir = Path(".")  # os.path.expanduser("~")
         match sys.platform:
             case "win32":
-                self.open_file_dir = os.path.expandvars(
-                    "%APPDATA%/../LocalLow/Amistech/My Winter Car"
+                self.open_file_dir = Path(
+                    os.path.expandvars("%APPDATA%/../LocalLow/Amistech/My Winter Car")
                 )
             case "darwin":
                 pass
@@ -83,13 +84,13 @@ class MainWindow(QMainWindow):
         """
         filenames, _ = QFileDialog.getOpenFileNames(self, "Open files", self.open_file_dir, filter="TXT-files (*.txt);;All files (*.*)")
         for filename in filenames:
-            self.open_file(filename)
+            self.open_file(Path(filename).resolve())
 
-    def open_file(self, filename: str):
+    def open_file(self, filename: Path):
         if filename in self.open_files:
             return
 
-        self.open_file_dir = os.path.dirname(filename)
+        self.open_file_dir = filename.parent
         try:
             with open(filename, "rb") as f:
                 reader = ES2Reader(f)
@@ -102,7 +103,7 @@ class MainWindow(QMainWindow):
 
         self.open_new_tab(filename, file_data)
 
-    def open_new_tab(self, filename: str, file_data: dict[str, ES2Field]):
+    def open_new_tab(self, filename: Path, file_data: dict[str, ES2Field]):
         tab_widget = cast(QTabWidget, self.ui.tabWidget)
         table_widget = TableWidget(filename=filename, data=file_data)
         index = tab_widget.addTab(table_widget, os.path.basename(filename))
@@ -135,17 +136,13 @@ class MainWindow(QMainWindow):
         """
         self._close_tab_by_index(index)
 
-    def set_data_changed(
-        self, changed: bool = True, *, filename: str = "", tab_index: int = -1
-    ):
+    def set_data_changed(self, changed: bool = True, *, filename: Path, tab_index: int):
         """
         Slot that gets triggered when the data_changed signal on a TableWidget gets triggered.
         """
         logger.info("CHANGED %s %d %d", filename, tab_index, changed)
         tab_widget = cast(QTabWidget, self.ui.tabWidget)
-        tab_widget.setTabText(
-            tab_index, f"{os.path.basename(filename)}{' *' if changed else ''}"
-        )
+        tab_widget.setTabText(tab_index, f"{filename.name}{' *' if changed else ''}")
 
         self.ui.action_Save.setEnabled(changed)
 
@@ -160,8 +157,8 @@ class MainWindow(QMainWindow):
         assert tab.filename
         assert tab.file_data
         for i in range(100):
-            backup_filename = f"{tab.filename}.{i}"
-            if not os.path.exists(backup_filename):
+            backup_filename = tab.filename.with_suffix(f".{i}.{tab.filename.suffix}")
+            if not backup_filename.exists():
                 _copy_file(tab.filename, backup_filename)
                 break
         else:
