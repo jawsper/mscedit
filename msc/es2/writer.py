@@ -199,6 +199,8 @@ class ES2Writer:
             )
 
             match collection_type:
+                case ES2Key.NativeArray:
+                    self._write_array(header.value_type, value)
                 case ES2Key.List:
                     self._write_list(header.value_type, value)
                 case ES2Key.Dictionary:

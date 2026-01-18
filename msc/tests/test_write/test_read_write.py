@@ -7,7 +7,7 @@ from msc.es2.reader import ES2Reader
 from msc.es2.writer import ES2Writer
 
 
-@pytest.mark.parametrize("filename", ["simple", "complex", "carparts", "items2", "savefile", "speedcam"])
+@pytest.mark.parametrize("filename", ["simple", "complex", "carparts", "items2", "savefile", "speedcam", "Mods"])
 def test_read_write_identical(filename: str):
     read_buffer = BytesIO()
     write_buffer = BytesIO()

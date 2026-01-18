@@ -54,6 +54,8 @@ class ES2Reader:
             if header.settings.encrypt:
                 raise NotImplementedError("Cannot deal with encryption sorry.")
             match header.collection_type:
+                case ES2Key.NativeArray:
+                    data[self.current_tag.tag] = self._read_array(header.value_type)
                 case ES2Key.List:
                     self.read_byte()  # always zero
                     list_len = self.read_int32()
