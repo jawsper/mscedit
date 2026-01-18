@@ -81,9 +81,9 @@ class MainWindow(QMainWindow):
         """
         Slot that gets triggered by the "Open" menu item.
         """
-        fname = QFileDialog.getOpenFileName(self, "Open file", self.open_file_dir)
-        if fname[0]:
-            self.open_file(fname[0])
+        filenames, _ = QFileDialog.getOpenFileNames(self, "Open files", self.open_file_dir, filter="TXT-files (*.txt);;All files (*.*)")
+        for filename in filenames:
+            self.open_file(filename)
 
     def open_file(self, filename: str):
         if filename in self.open_files:
