@@ -1,9 +1,16 @@
 from itertools import cycle
 
-from PyQt6 import QtCore, QtGui
-from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtCore import Qt, QPoint, pyqtSlot
 from PyQt6.QtWidgets import QDialog, QGraphicsScene, QGraphicsView, QVBoxLayout, QWidget
-from PyQt6.QtGui import QPixmap, QPainter, QPen
+from PyQt6.QtGui import (
+    QKeySequence,
+    QPainter,
+    QPaintEvent,
+    QPen,
+    QPixmap,
+    QShortcut,
+    QTransform,
+)
 from PyQt6.uic.load_ui import loadUi
 
 from msc.es2.enums import ES2ValueType
@@ -18,7 +25,7 @@ class MapWidget(QWidget):
         self.markers = {}
         self.setFixedSize(self.background.size())
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: QPaintEvent):
         qp = QPainter(self)
         qp.drawPixmap(0, 0, self.background)
 
@@ -101,31 +108,31 @@ class MapViewDialog(QDialog):
         layout: QVBoxLayout = self.ui.verticalLayout
         layout.insertWidget(1, self._view)
 
-        QtGui.QShortcut(
-            QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.ZoomIn),
+        QShortcut(
+            QKeySequence(QKeySequence.StandardKey.ZoomIn),
             self._view,
-            context=QtCore.Qt.ShortcutContext.WidgetShortcut,
+            context=Qt.ShortcutContext.WidgetShortcut,
             activated=self.zoom_in,
         )
 
-        QtGui.QShortcut(
-            QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.ZoomOut),
+        QShortcut(
+            QKeySequence(QKeySequence.StandardKey.ZoomOut),
             self._view,
-            context=QtCore.Qt.ShortcutContext.WidgetShortcut,
+            context=Qt.ShortcutContext.WidgetShortcut,
             activated=self.zoom_out,
         )
 
-    @QtCore.pyqtSlot()
+    @pyqtSlot()
     def zoom_in(self):
-        scale_tr = QtGui.QTransform()
+        scale_tr = QTransform()
         scale_tr.scale(MapViewDialog.factor, MapViewDialog.factor)
 
         tr = self._view.transform() * scale_tr
         self._view.setTransform(tr)
 
-    @QtCore.pyqtSlot()
+    @pyqtSlot()
     def zoom_out(self):
-        scale_tr = QtGui.QTransform()
+        scale_tr = QTransform()
         scale_tr.scale(MapViewDialog.factor, MapViewDialog.factor)
 
         scale_inverted, invertible = scale_tr.inverted()
