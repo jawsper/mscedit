@@ -58,21 +58,9 @@ class ES2Reader:
                     data[self.current_tag.tag] = self._read_array(header.value_type)
                 case ES2Key.List:
                     self.read_byte()  # always zero
-                    list_len = self.read_int32()
-                    val = []
-                    for _ in range(list_len):
-                        val.append(self._read_type(header.value_type))
-                    data[self.current_tag.tag] = val
+                    data[self.current_tag.tag] = self._read_list(header.value_type)
                 case ES2Key.Dictionary:
-                    self.read_byte()  # always zero
-                    self.read_byte()  # always zero
-                    val = {}
-                    dictionary_len = self.read_int32()
-                    for _ in range(dictionary_len):
-                        k = self._read_type(header.key_type)
-                        v = self._read_type(header.value_type)
-                        val[k] = v
-                    data[self.current_tag.tag] = val
+                    data[self.current_tag.tag] = self._read_dict(header.key_type, header.value_type)
                 case ES2Key.Null:
                     data[self.current_tag.tag] = self._read_type(header.value_type)
                 case _:
@@ -220,6 +208,25 @@ class ES2Reader:
         for _ in range(count):
             array.append(self._read_type(type))
         return array
+
+    def _read_list(self, type: ES2ValueType):
+        array = []
+        self.read_byte()  # always zero
+        count = self.read_int32()
+        for _ in range(count):
+            array.append(self._read_type(type))
+        return array
+
+    def _read_dict(self, key_type: ES2ValueType, value_type: ES2ValueType):
+        self.read_byte()  # always zero
+        self.read_byte()  # always zero
+        val = {}
+        dictionary_len = self.read_int32()
+        for _ in range(dictionary_len):
+            k = self._read_type(key_type)
+            v = self._read_type(value_type)
+            val[k] = v
+        return val
 
     def _read_type(self, value_type: ES2ValueType):
         try:
