@@ -5,7 +5,7 @@ from PyQt6.uic.load_ui import loadUi
 
 from msc.es2.types import ES2Field
 
-from gui.widgets import EditWidget
+from gui.widgets.edit import EditWidget
 
 
 class EditDialog(QDialog):
