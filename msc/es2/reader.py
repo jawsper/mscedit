@@ -57,7 +57,6 @@ class ES2Reader:
                 case ES2Key.NativeArray:
                     data[self.current_tag.tag] = self._read_array(header.value_type)
                 case ES2Key.List:
-                    self.read_byte()  # always zero
                     data[self.current_tag.tag] = self._read_list(header.value_type)
                 case ES2Key.Dictionary:
                     data[self.current_tag.tag] = self._read_dict(header.key_type, header.value_type)
