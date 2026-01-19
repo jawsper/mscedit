@@ -47,8 +47,9 @@ class EditWidget(QWidget):
         self.add_edit_widgets()
 
     def add_edit_widgets(self):
+        assert self.item
         match self.item.header.collection_type:
-            case ES2Key.List:
+            case ES2Key.NativeArray | ES2Key.List:
                 for item in self.item.value:
                     self._add_edit_widgets_to_layout(
                         self.item.header.value_type, "", item
@@ -87,6 +88,9 @@ class EditWidget(QWidget):
         widget.setChecked(value)
         widget.setText(label)
         return [widget]
+    
+    def _widget_byte(self, label, value: int):
+        return self.__widget_generic_textbox(label, value)
 
     def __widget_generic_textbox(self, label, value):
         widget = QLineEdit()
@@ -195,7 +199,7 @@ class EditWidget(QWidget):
             case ES2ValueType.float:
                 return float(widget.text())
 
-            case ES2ValueType.int32:
+            case ES2ValueType.int32 | ES2ValueType.byte:
                 return int(widget.text())
 
             case ES2ValueType.string:
@@ -237,8 +241,9 @@ class EditWidget(QWidget):
                 return Color(*values)
 
     def get_value(self):
+        assert self.item
         match self.item.header.collection_type:
-            case ES2Key.List:
+            case ES2Key.NativeArray | ES2Key.List:
                 value = []
                 for i in range(self.get_widget_container().count()):
                     widget = self.get_widget_container().itemAt(i).widget()
