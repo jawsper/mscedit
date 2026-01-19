@@ -19,8 +19,8 @@ from PyQt6.uic.load_ui import loadUi
 from msc.es2 import ES2Reader, ES2Writer
 from msc.es2.reader import ES2Field
 
-from .dialogs import BoltCheckerDialog, ErrorDialog, MapViewDialog
-from .widgets.table import TableWidget
+from ..dialogs import BoltCheckerDialog, ErrorDialog, MapViewDialog
+from ..widgets.table import TableWidget
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
