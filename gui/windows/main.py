@@ -176,7 +176,7 @@ class MainWindow(QMainWindow):
         assert tab.filename
         assert tab.file_data
         for i in range(100):
-            backup_filename = tab.filename.with_suffix(f".{i}.{tab.filename.suffix}")
+            backup_filename = tab.filename.with_suffix(f"{tab.filename.suffix}.{i}")
             if not backup_filename.exists():
                 _copy_file(tab.filename, backup_filename)
                 break
