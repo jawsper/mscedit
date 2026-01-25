@@ -3,7 +3,6 @@ import logging
 import os
 from pathlib import Path
 import shutil
-import sys
 import tempfile
 from typing import cast
 
@@ -19,6 +18,7 @@ from PyQt6.uic.load_ui import loadUi
 from msc.es2 import ES2Reader, ES2Writer
 from msc.es2.reader import ES2Field
 
+from ..config import ConfigLoader, Config
 from ..dialogs import BoltCheckerDialog, ErrorDialog, MapViewDialog
 from ..widgets.table import TableWidget
 
@@ -39,24 +39,16 @@ def _copy_file(src, dst):
 
 
 class MainWindow(QMainWindow):
-    open_file_dir: Path
+    config_loader: ConfigLoader
+    config: Config
     open_files: set[Path]
 
     def __init__(self):
         super().__init__()
 
-        self.open_file_dir = Path(".")  # os.path.expanduser("~")
-        match sys.platform:
-            case "win32":
-                self.open_file_dir = Path(
-                    os.path.expandvars("%APPDATA%/../LocalLow/Amistech/My Winter Car")
-                )
-            case "darwin":
-                pass
-            case "linux":
-                pass
-            case _:
-                pass
+        self.config_loader = ConfigLoader()
+        self.config = self.config_loader.load()
+
         self.open_files = set()
 
         self.ui = loadUi("gui/MainWindow.ui", self)
@@ -80,6 +72,10 @@ class MainWindow(QMainWindow):
 
         self.ui.searchField.textChanged.connect(self.searchField_textChanged)
 
+        if self.config.open_files:
+            for file in self.config.open_files:
+                self.open_file(Path(file).resolve())
+
     def menu_open(self):
         """
         Slot that gets triggered by the "Open" menu item.
@@ -87,7 +83,7 @@ class MainWindow(QMainWindow):
         filenames, _ = QFileDialog.getOpenFileNames(
             self,
             "Open files",
-            str(self.open_file_dir),
+            self.config.open_file_dir,
             filter="TXT-files (*.txt);;All files (*.*)",
         )
         for filename in filenames:
@@ -109,7 +105,7 @@ class MainWindow(QMainWindow):
         Slot that gets triggered by the "Open folder" menu item.
         """
         folder = QFileDialog.getExistingDirectory(
-            self, "Open folder", str(self.open_file_dir)
+            self, "Open folder", str(self.config.open_file_dir)
         )
         if folder:
             path = Path(folder)
@@ -121,7 +117,8 @@ class MainWindow(QMainWindow):
         if filename in self.open_files and not reload:
             return
 
-        self.open_file_dir = filename.parent
+        self.config.open_file_dir = str(filename.parent)
+        self.config_loader.save(self.config)
         try:
             with open(filename, "rb") as f:
                 reader = ES2Reader(f)
@@ -132,6 +129,7 @@ class MainWindow(QMainWindow):
 
         if not reload:
             self.open_files.add(filename)
+            self._save_open_files_to_config()
             self.open_new_tab(filename, file_data)
         return file_data
 
@@ -220,6 +218,7 @@ class MainWindow(QMainWindow):
         tab = cast(TableWidget | None, tab_widget.widget(index))
         if tab:
             self.open_files.remove(tab.filename)
+            self._save_open_files_to_config()
         tab_widget.removeTab(index)
 
     def menu_search_mode(self, action: bool):
@@ -288,3 +287,7 @@ class MainWindow(QMainWindow):
         for index in range(tab_widget.count()):
             tabs.append(tab_widget.widget(index))
         return tabs
+
+    def _save_open_files_to_config(self):
+        self.config.open_files = [str(f) for f in self.open_files]
+        self.config_loader.save(self.config)
