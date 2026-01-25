@@ -63,6 +63,7 @@ class MainWindow(QMainWindow):
         assert self.ui
 
         self.ui.action_Open.triggered.connect(self.menu_open)
+        self.ui.action_Reopen.triggered.connect(self.menu_reopen)
         self.ui.actionOpen_folder.triggered.connect(self.menu_open_folder)
         self.ui.action_Save.triggered.connect(self.menu_save)
         self.ui.action_Close.triggered.connect(self.menu_close)
@@ -92,6 +93,17 @@ class MainWindow(QMainWindow):
         for filename in filenames:
             self.open_file(Path(filename).resolve())
 
+    def menu_reopen(self):
+        """
+        Slot that gets triggered by the "Reopen" menu item.
+        """
+        tab = self._current_tab()
+        if tab is None:
+            return
+        filename = tab.filename
+        file_data = self.open_file(filename, reload=True)
+        tab.reload(file_data)
+
     def menu_open_folder(self):
         """
         Slot that gets triggered by the "Open folder" menu item.
@@ -105,8 +117,8 @@ class MainWindow(QMainWindow):
             for filename in txt_files:
                 self.open_file(filename)
 
-    def open_file(self, filename: Path):
-        if filename in self.open_files:
+    def open_file(self, filename: Path, reload: bool = False):
+        if filename in self.open_files and not reload:
             return
 
         self.open_file_dir = filename.parent
@@ -118,9 +130,10 @@ class MainWindow(QMainWindow):
             logger.exception("Failed to load file")
             return self.show_error(e)
 
-        self.open_files.add(filename)
-
-        self.open_new_tab(filename, file_data)
+        if not reload:
+            self.open_files.add(filename)
+            self.open_new_tab(filename, file_data)
+        return file_data
 
     def open_new_tab(self, filename: Path, file_data: dict[str, ES2Field]):
         tab_widget = cast(QTabWidget, self.ui.tabWidget)

@@ -41,6 +41,10 @@ class TableWidget(QWidget):
 
         self.tree_view.doubleClicked.connect(self.treeView_doubleClicked)
 
+    def reload(self, data: dict[str, ES2Field]):
+        self.file_data = data
+        self.datamodel.setSourceModel(TreeModel(data))
+
     def treeView_doubleClicked(self, index: QModelIndex):
         self.edit_index(index.siblingAtColumn(0))
 
