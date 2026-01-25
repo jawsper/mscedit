@@ -1,7 +1,7 @@
 from functools import cache
 import re
 
-from tabulate import tabulate
+# from tabulate import tabulate
 
 from PyQt6.QtWidgets import QDialog
 from PyQt6.uic.load_ui import loadUi
@@ -175,7 +175,7 @@ class BoltCheckerDialog(QDialog):
 
         self.boltable_parts = sorted(self.boltable_parts, key=lambda part: part.name)
 
-        print(tabulate(not_found, headers="keys"))
+        # print(tabulate(not_found, headers="keys"))
 
     def check_bolts(self):
         pass
