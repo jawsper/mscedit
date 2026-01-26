@@ -25,16 +25,15 @@ class Config:
 
 
 class ConfigLoader:
-    config_file_path: Path
-
-    def __init__(self):
+    @property
+    def config_file_path(self) -> Path:
         if sys.platform == "win32":
             config_dir = Path(
                 os.path.expandvars("%APPDATA%/../LocalLow/Amistech/My Winter Car")
             )
         else:
             config_dir = Path("~/.config").expanduser()
-        self.config_file_path = config_dir / "msceditor.yaml"
+        return config_dir / "msceditor.yaml"
 
     def load(self) -> Config:
         if self.config_file_path.exists():
