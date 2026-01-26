@@ -14,6 +14,8 @@ from msc.es2.types import ES2Field
 
 class MapViewDialog(QDialog):
     factor = 1.5
+    _scene: QGraphicsScene
+    _view: QGraphicsView
 
     def __init__(self, model: dict[str, ES2Field], parent=None):
         super().__init__(parent)
@@ -41,6 +43,11 @@ class MapViewDialog(QDialog):
 
         self._map = MapWidget()
         self._scene.addWidget(self._map)
+
+        self._view.fitInView(
+            self._scene.itemsBoundingRect(),
+            Qt.AspectRatioMode.KeepAspectRatio,
+        )
 
         layout: QVBoxLayout = self.ui.verticalLayout
         layout.insertWidget(1, self._view)
