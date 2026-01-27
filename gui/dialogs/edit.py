@@ -20,8 +20,7 @@ class EditDialog(QDialog):
 
         self.ui = loadUi("gui/EditDialog.ui", self)
         widget = cast(EditWidget, self.ui.widget)
-        widget.set_tag(tag)
-        widget.set_item(item)
+        widget.set_item(tag, item)
 
     def get_value(self):
         return self.ui.widget.get_value()

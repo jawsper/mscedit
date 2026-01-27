@@ -58,11 +58,9 @@ class EditWidget(QWidget):
         self.tag = None
         self.item = None
 
-    def set_tag(self, tag: str):
+    def set_item(self, tag: str, item: ES2Field):
         self.tag = tag
-        self.ui.label.setText(self.tag)
-
-    def set_item(self, item: ES2Field):
+        self._label.setText(self.tag)
         self.item = item
         self.add_edit_widgets()
 
