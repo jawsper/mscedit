@@ -1,16 +1,20 @@
 import logging
+from typing import cast
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import (
     QWidget,
     QCheckBox,
-    QLineEdit,
+    QFormLayout,
     QGroupBox,
-    QVBoxLayout,
+    QFrame,
     QLabel,
+    QLayout,
+    QLineEdit,
+    QScrollArea,
+    QVBoxLayout,
 )
-from PyQt6.uic.load_ui import loadUi
 
 from msc.es2.enums import ES2Key, ES2ValueType
 from msc.es2.types import (
@@ -31,10 +35,26 @@ class EditWidget(QWidget):
     tag: str | None
     item: ES2Field | None
 
+    _layout: QVBoxLayout
+    _label: QLabel
+    _scroll_area: QScrollArea
+    _form_widget: QWidget
+    _form_layout: QFormLayout
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.ui = loadUi("gui/EditWidget.ui", self)
 
+        self._layout = QVBoxLayout(self)
+        self._label = QLabel()
+        self._layout.addWidget(self._label)
+        self._scroll_area = QScrollArea()
+        self._scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        self._scroll_area.setWidgetResizable(True)
+        self._form_widget = QWidget()
+        self._form_widget.setGeometry(0, 0, 382, 256)
+        self._form_layout = QFormLayout(self._form_widget)
+        self._layout.addWidget(self._scroll_area)
+        self._scroll_area.setWidget(self._form_widget)
         self.tag = None
         self.item = None
 
@@ -67,28 +87,24 @@ class EditWidget(QWidget):
                 logger.warning(
                     f"Cannot render widgets for {self.item.header.collection_type}"
                 )
-        self.get_widget_container().setAlignment(Qt.AlignmentFlag.AlignTop)
+        self._form_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
     def _add_edit_widgets_to_layout(
         self, value_type: ES2ValueType, label, value, *, is_dict: bool = False
     ):
-        wrapper = QWidget()
-        wrapper.show()
-        wrapper_layout = QVBoxLayout()
-        wrapper.setLayout(wrapper_layout)
-        for widget in self._make_edit_widgets(
-            value_type, label, value, is_dict=is_dict
-        ):
-            widget.show()
-            wrapper_layout.addWidget(widget)
-        self.get_widget_container().addWidget(wrapper)
+        layout = self._form_layout
+        for widget in self._make_edit_widgets(value_type, label, value):
+            if is_dict:
+                layout.addRow(label, widget)
+            else:
+                layout.addRow(widget)
 
     def _widget_bool(self, label, value: bool):
         widget = QCheckBox()
         widget.setChecked(value)
         widget.setText(label)
         return [widget]
-    
+
     def _widget_byte(self, label, value: int):
         return self.__widget_generic_textbox(label, value)
 
@@ -159,51 +175,41 @@ class EditWidget(QWidget):
         image.setScaledContents(True)
         yield image
 
-    def _make_edit_widgets(
-        self, value_type: ES2ValueType, label, value, *, is_dict: bool = False
-    ):
+    def _make_edit_widgets(self, value_type: ES2ValueType, label, value):
         widgets = []
 
         widget_factory = f"_widget_{value_type.name}"
         if hasattr(self, widget_factory):
             for widget in getattr(self, widget_factory)(label, value):
-                if is_dict:
-                    groupbox = QGroupBox(label)
-                    layout = QVBoxLayout()
-                    groupbox.setLayout(layout)
-                    layout.addWidget(widget)
-                    widgets.append(groupbox)
-                else:
-                    widgets.append(widget)
+                widgets.append(widget)
         else:
             logger.warning("No widget factory for type '%s'", value_type.name)
 
         return widgets
 
-    def _get_widget_result(self, wrapper, value_type: ES2ValueType, *, is_dict: bool = False):
+    def _get_widget_result(
+        self,
+        wrapper: QLayout | QWidget,
+        value_type: ES2ValueType,
+    ):
         layout = wrapper.layout()
         if layout:
-            widget = layout.itemAt(0).widget()
+            widget: QWidget = layout.itemAt(0).widget()
         else:
-            widget = wrapper
-
-        if is_dict:
-            key = widget.title()
-            value = self._get_widget_result(widget, value_type)
-            return key, value
+            widget: QWidget = wrapper
 
         match value_type:
             case ES2ValueType.bool:
-                return widget.isChecked()
+                return cast(QCheckBox, widget).isChecked()
 
             case ES2ValueType.float:
-                return float(widget.text())
+                return float(cast(QLineEdit, widget).text())
 
             case ES2ValueType.int32 | ES2ValueType.byte:
-                return int(widget.text())
+                return int(cast(QLineEdit, widget).text())
 
             case ES2ValueType.string:
-                return widget.text()
+                return cast(QLineEdit, widget).text()
 
             case ES2ValueType.transform:
                 value = Transform()
@@ -241,35 +247,48 @@ class EditWidget(QWidget):
                 return Color(*values)
 
     def get_value(self):
+        form_layout = self._form_layout
         assert self.item
         match self.item.header.collection_type:
             case ES2Key.NativeArray | ES2Key.List:
                 value = []
-                for i in range(self.get_widget_container().count()):
-                    widget = self.get_widget_container().itemAt(i).widget()
+                for i in range(form_layout.rowCount()):
+                    widget = cast(
+                        QWidget,
+                        form_layout.itemAt(i, QFormLayout.ItemRole.FieldRole).widget(),
+                    )
                     value.append(
                         self._get_widget_result(widget, self.item.header.value_type)
                     )
                 return value
             case ES2Key.Dictionary:
                 value = {}
-                for i in range(self.get_widget_container().count()):
-                    widget = self.get_widget_container().itemAt(i).widget()
-                    k, v = self._get_widget_result(
-                        widget,
+                for i in range(form_layout.rowCount()):
+                    label = cast(
+                        QLabel,
+                        form_layout.itemAt(i, QFormLayout.ItemRole.LabelRole).widget(),
+                    )
+                    value_widget = cast(
+                        QWidget,
+                        form_layout.itemAt(i, QFormLayout.ItemRole.FieldRole).widget(),
+                    )
+                    k = label.text()
+                    v = self._get_widget_result(
+                        value_widget,
                         self.item.header.value_type,
-                        is_dict=True,
                     )
                     value[k] = v
                 return value
             case ES2Key.Null:
-                widget = self.get_widget_container().itemAt(0).widget()
-                return self._get_widget_result(widget, self.item.header.value_type)
+                return self._get_widget_result(
+                    form_layout,
+                    self.item.header.value_type,
+                )
             case _:
                 logger.warning(
                     f"Cannot get value for {self.item.header.collection_type}"
                 )
         logger.warning("No value was returned.")
 
-    def get_widget_container(self) -> QVBoxLayout:
-        return self.ui.verticalLayout_2
+    def get_widget_container(self) -> QFormLayout:
+        return self._form_layout
