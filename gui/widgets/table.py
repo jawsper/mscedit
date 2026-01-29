@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import QDialog, QWidget, QTreeView, QVBoxLayout, QAbstractI
 from msc.es2.types import ES2Field
 
 from ..dialogs import EditDialog
-from ..models import TreeModel
+from ..models import TreeModel, TreeItemIndex
 
 
 class TreeView(QTreeView):
@@ -52,8 +52,10 @@ class TableWidget(QWidget):
         self.datamodel.setSourceModel(TreeModel(self.file_data))
 
         self.tree_view.setModel(self.datamodel)
-        self.tree_view.sortByColumn(0, Qt.SortOrder.AscendingOrder)
-        self.tree_view.resizeColumnToContents(0)
+        self.tree_view.sortByColumn(
+            TreeItemIndex.TAG.value, Qt.SortOrder.AscendingOrder
+        )
+        self.tree_view.resizeColumnToContents(TreeItemIndex.TAG.value)
         self.tree_view.setSelectionMode(
             QAbstractItemView.SelectionMode.ExtendedSelection
         )
@@ -70,7 +72,10 @@ class TableWidget(QWidget):
         def _selection_to_tags(selection: QItemSelection) -> set[str]:
             indexes = selection.indexes()
 
-            tags = {index.siblingAtColumn(0).data() for index in indexes}
+            tags = {
+                index.siblingAtColumn(TreeItemIndex.TAG.value).data()
+                for index in indexes
+            }
             return tags
 
         def _selected_tags_to_dict(selection: set[str]) -> dict[str, ES2Field]:
@@ -82,10 +87,15 @@ class TableWidget(QWidget):
         )
 
     def treeView_doubleClicked(self, index: QModelIndex):
-        self.edit_index(index.siblingAtColumn(0))
+        self.edit_index(index)
 
     def edit_index(self, index: QModelIndex):
-        tag = cast(str, index.data())
+        tag_index = index.siblingAtColumn(TreeItemIndex.TAG.value)
+        tag = cast(str, tag_index.data())
+
+        if tag not in self.file_data:
+            return
+
         dialog = EditDialog(tag, self.file_data[tag], self)
         result = dialog.exec()
         if result == QDialog.DialogCode.Accepted:
@@ -95,5 +105,5 @@ class TableWidget(QWidget):
             self.changed = True
             self.data_changed.emit(True)
             self.file_data[tag].value = dialog_result
-            value_index = index.siblingAtColumn(2)
+            value_index: QModelIndex = index.siblingAtColumn(TreeItemIndex.VALUE.value)
             self.datamodel.setData(value_index, dialog_result)

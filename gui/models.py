@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any
 
 from PyQt6.QtCore import Qt, QAbstractItemModel, QModelIndex
@@ -10,6 +11,12 @@ def _truncate_value(value: str):
     if len(value) > 75:
         return value[:75] + "..."
     return value
+
+
+class TreeItemIndex(int, Enum):
+    TAG = 0
+    TYPE = 1
+    VALUE = 2
 
 class TreeItem(object):
     def __init__(self, data, parent=None):
