@@ -2,7 +2,7 @@ from itertools import cycle
 import logging
 from pathlib import Path
 
-from PyQt6.QtCore import pyqtSlot, Qt, QPointF, QRectF
+from PyQt6.QtCore import Qt, QPointF, QRectF
 from PyQt6.QtWidgets import (
     QDockWidget,
     QGraphicsScene,
@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PyQt6.QtGui import QPixmap, QTransform
+from PyQt6.QtGui import QPixmap, QTransform, QWheelEvent
 
 from msc.es2.types import ES2Field
 from msc.es2.unity import Transform
@@ -105,11 +105,48 @@ _marker_colors = cycle(
 
 
 class MapWidget(QWidget):
-    factor = 1.5
     _scene: QGraphicsScene
     _view: QGraphicsView
 
     markers: dict[str, list]
+
+    class GraphicsView(QGraphicsView):
+        factor = 1.5
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+            self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+            self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+            self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+            self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        def wheelEvent(self, event: QWheelEvent):
+            if event.angleDelta().y() > 0:
+                self.zoom_in()
+                event.accept()
+                return
+            elif event.angleDelta().y() < 0:
+                self.zoom_out()
+                event.accept()
+                return
+
+        def zoom_in(self):
+            scale_tr = QTransform()
+            scale_tr.scale(self.factor, self.factor)
+
+            tr = self.transform() * scale_tr
+            self.setTransform(tr)
+
+        def zoom_out(self):
+            scale_tr = QTransform()
+            scale_tr.scale(self.factor, self.factor)
+
+            scale_inverted, invertible = scale_tr.inverted()
+
+            if invertible:
+                tr = self.transform() * scale_inverted
+                self.setTransform(tr)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -121,7 +158,7 @@ class MapWidget(QWidget):
         self._background = QPixmap("gui/perjarvi_road_map.png")
         self._scene_map_widget = self._scene.addPixmap(self._background)
 
-        self._view = QGraphicsView(self._scene)
+        self._view = MapWidget.GraphicsView(self._scene)
         self._view.fitInView(
             self._scene.itemsBoundingRect(),
             Qt.AspectRatioMode.KeepAspectRatio,
@@ -145,25 +182,6 @@ class MapWidget(QWidget):
         #     context=Qt.ShortcutContext.WidgetShortcut,
         #     # activated=self.zoom_out,
         # ).activated.connect(self.zoom_out)
-
-    @pyqtSlot()
-    def zoom_in(self):
-        scale_tr = QTransform()
-        scale_tr.scale(self.factor, self.factor)
-
-        tr = self._view.transform() * scale_tr
-        self._view.setTransform(tr)
-
-    @pyqtSlot()
-    def zoom_out(self):
-        scale_tr = QTransform()
-        scale_tr.scale(self.factor, self.factor)
-
-        scale_inverted, invertible = scale_tr.inverted()
-
-        if invertible:
-            tr = self._view.transform() * scale_inverted
-            self._view.setTransform(tr)
 
     def add_marker(self, tag: str, item: Transform):
         if tag in self.markers:
