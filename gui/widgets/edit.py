@@ -32,8 +32,8 @@ logger = logging.getLogger(__name__)
 
 
 class EditWidget(QWidget):
-    tag: str | None
-    item: ES2Field | None
+    tag: str
+    item: ES2Field
 
     _layout: QVBoxLayout
     _label: QLabel
@@ -41,11 +41,12 @@ class EditWidget(QWidget):
     _form_widget: QWidget
     _form_layout: QFormLayout
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget | None = None, *, tag: str, item: ES2Field):
         super().__init__(parent)
 
         self._layout = QVBoxLayout(self)
         self._label = QLabel()
+        self._label.setText(tag)
         self._layout.addWidget(self._label)
         self._scroll_area = QScrollArea()
         self._scroll_area.setFrameShape(QFrame.Shape.NoFrame)
@@ -55,17 +56,10 @@ class EditWidget(QWidget):
         self._form_layout = QFormLayout(self._form_widget)
         self._layout.addWidget(self._scroll_area)
         self._scroll_area.setWidget(self._form_widget)
-        self.tag = None
-        self.item = None
 
-    def set_item(self, tag: str, item: ES2Field):
         self.tag = tag
-        self._label.setText(self.tag)
         self.item = item
-        self.add_edit_widgets()
 
-    def add_edit_widgets(self):
-        assert self.item
         match self.item.header.collection_type:
             case ES2Key.NativeArray | ES2Key.List:
                 for item in self.item.value:
@@ -85,7 +79,6 @@ class EditWidget(QWidget):
                 logger.warning(
                     f"Cannot render widgets for {self.item.header.collection_type}"
                 )
-        self._form_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
     def _add_edit_widgets_to_layout(
         self, value_type: ES2ValueType, label, value, *, is_dict: bool = False

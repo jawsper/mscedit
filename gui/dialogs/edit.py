@@ -19,8 +19,8 @@ class EditDialog(QDialog):
         self.item = item
 
         self.ui = loadUi("gui/EditDialog.ui", self)
-        widget = cast(EditWidget, self.ui.widget)
-        widget.set_item(tag, item)
+        self.widget = EditWidget(tag=tag, item=item)
+        self.ui.verticalLayout.insertWidget(0, self.widget)
 
     def get_value(self):
-        return self.ui.widget.get_value()
+        return self.widget.get_value()
