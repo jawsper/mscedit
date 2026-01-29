@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QPixmap, QTransform
 
-from msc.es2.types import ES2Field, ES2ValueType
+from msc.es2.types import ES2Field
 from msc.es2.unity import Transform
 
 
@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 
 class MapDockWidget(QDockWidget):
     _file_data: dict[Path, dict[str, ES2Field]]
-    _selected_tag: str | None = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -44,18 +43,6 @@ class MapDockWidget(QDockWidget):
         if filename in self._file_data:
             logger.info("Removing file data '%s'", filename)
             del self._file_data[filename]
-
-    def selected_tag(self, tag: str | None):
-        if self._selected_tag:
-            self._map_widget.remove_marker(self._selected_tag)
-        self._selected_tag = tag
-
-        if tag:
-            for filename, data in self._file_data.items():
-                if tag in data:
-                    item = data[tag]
-                    if item.header.value_type == ES2ValueType.transform:
-                        self._map_widget.add_marker(tag, item.value)
 
 
 def _scale_from_game_coordinates(

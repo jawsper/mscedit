@@ -16,7 +16,8 @@ from PyQt6.QtWidgets import (
 from PyQt6.uic.load_ui import loadUi
 
 from msc.es2 import ES2Reader, ES2Writer
-from msc.es2.reader import ES2Field
+from msc.es2.enums import ES2ValueType
+from msc.es2.types import ES2Field
 
 from ..config import ConfigLoader, Config
 from ..dialogs import BoltCheckerDialog, ErrorDialog
@@ -150,12 +151,29 @@ class MainWindow(QMainWindow):
             if self.ui.action_CaseSensitive.isChecked()
             else Qt.CaseSensitivity.CaseInsensitive
         )
+        table_widget.tags_selected_changed.connect(
+            partial(self.tags_selected_changed, filename=filename, tab_index=index)
+        )
         tab_widget.setCurrentIndex(index)
 
-    def tag_selected(self, tag: str):
-        logger.info("Selected tag '%s'", tag)
+    def tags_selected_changed(
+        self,
+        selected: dict[str, ES2Field],
+        deselected: set,
+        *,
+        filename: str,
+        tab_index: int,
+    ):
+        logger.info(
+            "Selection changed %s %s %s %d", selected, deselected, filename, tab_index
+        )
+
         if self._map_dock_widget:
-            self._map_dock_widget.selected_tag(tag)
+            for tag, item in selected.items():
+                if item.header.value_type == ES2ValueType.transform:
+                    self._map_dock_widget._map_widget.add_marker(tag, item.value)
+            for tag in deselected:
+                self._map_dock_widget._map_widget.remove_marker(tag)
 
     def current_tab_changed(self, index: int):
         """

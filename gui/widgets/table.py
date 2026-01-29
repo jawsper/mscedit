@@ -1,8 +1,15 @@
 from pathlib import Path
 from typing import cast
 
-from PyQt6.QtCore import Qt, QModelIndex, QSortFilterProxyModel, pyqtSignal
-from PyQt6.QtWidgets import QDialog, QWidget, QTreeView, QVBoxLayout
+from PyQt6.QtCore import (
+    Qt,
+    QModelIndex,
+    QSortFilterProxyModel,
+    pyqtSignal,
+    QAbstractItemModel,
+    QItemSelection,
+)
+from PyQt6.QtWidgets import QDialog, QWidget, QTreeView, QVBoxLayout, QAbstractItemView
 
 from msc.es2.types import ES2Field
 
@@ -11,11 +18,11 @@ from ..models import TreeModel
 
 
 class TreeView(QTreeView):
-    current_changed = pyqtSignal(QModelIndex, QModelIndex)
+    selection_changed = pyqtSignal(QItemSelection, QItemSelection)
 
-    def currentChanged(self, current: QModelIndex, previous: QModelIndex):
-        super().currentChanged(current, previous)
-        self.current_changed.emit(current, previous)
+    def selectionChanged(self, selected: QItemSelection, deselected: QItemSelection):
+        super().selectionChanged(selected, deselected)
+        self.selection_changed.emit(selected, deselected)
 
 
 class TableWidget(QWidget):
@@ -25,6 +32,7 @@ class TableWidget(QWidget):
 
     data_changed = pyqtSignal(bool)
     tag_selected = pyqtSignal(str)
+    tags_selected_changed = pyqtSignal(dict, set)
 
     def __init__(self, parent=None, *, filename: Path, data: dict[str, ES2Field]):
         super().__init__(parent)
@@ -41,25 +49,37 @@ class TableWidget(QWidget):
         self.datamodel = QSortFilterProxyModel()
         self.datamodel.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.datamodel.setSortCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        self.datamodel.setSourceModel(TreeModel(self.file_data))
 
         self.tree_view.setModel(self.datamodel)
-
-        self.datamodel.setSourceModel(TreeModel(self.file_data))
         self.tree_view.sortByColumn(0, Qt.SortOrder.AscendingOrder)
         self.tree_view.resizeColumnToContents(0)
-
+        self.tree_view.setSelectionMode(
+            QAbstractItemView.SelectionMode.ExtendedSelection
+        )
         self.tree_view.doubleClicked.connect(self.treeView_doubleClicked)
-        self.tree_view.current_changed.connect(self.treeview_current_changed)
+        self.tree_view.selection_changed.connect(self.treeview_selection_changed)
 
     def reload(self, data: dict[str, ES2Field]):
         self.file_data = data
         self.datamodel.setSourceModel(TreeModel(data))
 
-    def treeview_current_changed(self, current: QModelIndex, previous: QModelIndex):
-        if current.isValid():
-            tag_index = current.siblingAtColumn(0)
-            tag: str = cast(str, tag_index.data())
-            self.tag_selected.emit(tag)
+    def treeview_selection_changed(
+        self, selected: QItemSelection, deselected: QItemSelection
+    ):
+        def _selection_to_tags(selection: QItemSelection) -> set[str]:
+            indexes = selection.indexes()
+
+            tags = {index.siblingAtColumn(0).data() for index in indexes}
+            return tags
+
+        def _selected_tags_to_dict(selection: set[str]) -> dict[str, ES2Field]:
+            return {tag: self.file_data[tag] for tag in selection}
+
+        self.tags_selected_changed.emit(
+            _selected_tags_to_dict(_selection_to_tags(selected)),
+            _selection_to_tags(deselected),
+        )
 
     def treeView_doubleClicked(self, index: QModelIndex):
         self.edit_index(index.siblingAtColumn(0))
