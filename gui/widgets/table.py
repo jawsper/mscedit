@@ -59,6 +59,7 @@ class TableWidget(QWidget):
         self.tree_view.setSelectionMode(
             QAbstractItemView.SelectionMode.ExtendedSelection
         )
+        self.tree_view.setSortingEnabled(True)
         self.tree_view.doubleClicked.connect(self.treeView_doubleClicked)
         self.tree_view.selection_changed.connect(self.treeview_selection_changed)
 
