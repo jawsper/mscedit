@@ -23,7 +23,6 @@ from ..dialogs import BoltCheckerDialog, ErrorDialog, MapViewDialog
 from ..widgets.table import TableWidget
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 def _copy_file(src, dst):
