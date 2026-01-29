@@ -19,7 +19,8 @@ from msc.es2 import ES2Reader, ES2Writer
 from msc.es2.reader import ES2Field
 
 from ..config import ConfigLoader, Config
-from ..dialogs import BoltCheckerDialog, ErrorDialog, MapViewDialog
+from ..dialogs import BoltCheckerDialog, ErrorDialog
+from ..widgets.map import MapDockWidget
 from ..widgets.table import TableWidget
 
 logger = logging.getLogger(__name__)
@@ -41,12 +42,14 @@ class MainWindow(QMainWindow):
     config_loader: ConfigLoader
     config: Config
     open_files: set[Path]
+    _map_dock_widget: MapDockWidget | None
 
     def __init__(self):
         super().__init__()
 
         self.config_loader = ConfigLoader()
         self.config = self.config_loader.load()
+        self._map_dock_widget = None
 
         self.open_files = set()
 
@@ -130,6 +133,8 @@ class MainWindow(QMainWindow):
             self.open_files.add(filename)
             self._save_open_files_to_config()
             self.open_new_tab(filename, file_data)
+            if self._map_dock_widget:
+                self._map_dock_widget.add_file_data(filename, file_data)
         return file_data
 
     def open_new_tab(self, filename: Path, file_data: dict[str, ES2Field]):
@@ -146,6 +151,11 @@ class MainWindow(QMainWindow):
             else Qt.CaseSensitivity.CaseInsensitive
         )
         tab_widget.setCurrentIndex(index)
+
+    def tag_selected(self, tag: str):
+        logger.info("Selected tag '%s'", tag)
+        if self._map_dock_widget:
+            self._map_dock_widget.selected_tag(tag)
 
     def current_tab_changed(self, index: int):
         """
@@ -217,6 +227,8 @@ class MainWindow(QMainWindow):
         tab = cast(TableWidget | None, tab_widget.widget(index))
         if tab:
             self.open_files.remove(tab.filename)
+            if self._map_dock_widget:
+                self._map_dock_widget.remove_file_data(tab.filename)
             self._save_open_files_to_config()
         tab_widget.removeTab(index)
 
@@ -242,10 +254,15 @@ class MainWindow(QMainWindow):
         """
         Slot that gets triggered by the "Show map" menu item.
         """
-        tab = self._current_tab()
-        if tab:
-            dialog = MapViewDialog(tab.file_data, self)
-            dialog.exec()
+        if not self._map_dock_widget:
+            self._map_dock_widget = MapDockWidget(self)
+        self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self._map_dock_widget)
+        self._map_dock_widget.setFloating(False)
+        self._map_dock_widget.show()
+
+        self._map_dock_widget.reset()
+        for tab in self._all_tabs():
+            self._map_dock_widget.add_file_data(tab.filename, tab.file_data)
 
     def show_boltchecker(self):
         """

@@ -10,12 +10,21 @@ from ..dialogs import EditDialog
 from ..models import TreeModel
 
 
+class TreeView(QTreeView):
+    current_changed = pyqtSignal(QModelIndex, QModelIndex)
+
+    def currentChanged(self, current: QModelIndex, previous: QModelIndex):
+        super().currentChanged(current, previous)
+        self.current_changed.emit(current, previous)
+
+
 class TableWidget(QWidget):
     filename: Path
     file_data: dict[str, ES2Field]
     changed: bool = False
 
     data_changed = pyqtSignal(bool)
+    tag_selected = pyqtSignal(str)
 
     def __init__(self, parent=None, *, filename: Path, data: dict[str, ES2Field]):
         super().__init__(parent)
@@ -25,7 +34,7 @@ class TableWidget(QWidget):
         self.changed = False
 
         layout = QVBoxLayout()
-        self.tree_view = QTreeView()
+        self.tree_view = TreeView()
         layout.addWidget(self.tree_view)
         self.setLayout(layout)
 
@@ -40,10 +49,17 @@ class TableWidget(QWidget):
         self.tree_view.resizeColumnToContents(0)
 
         self.tree_view.doubleClicked.connect(self.treeView_doubleClicked)
+        self.tree_view.current_changed.connect(self.treeview_current_changed)
 
     def reload(self, data: dict[str, ES2Field]):
         self.file_data = data
         self.datamodel.setSourceModel(TreeModel(data))
+
+    def treeview_current_changed(self, current: QModelIndex, previous: QModelIndex):
+        if current.isValid():
+            tag_index = current.siblingAtColumn(0)
+            tag: str = cast(str, tag_index.data())
+            self.tag_selected.emit(tag)
 
     def treeView_doubleClicked(self, index: QModelIndex):
         self.edit_index(index.siblingAtColumn(0))
