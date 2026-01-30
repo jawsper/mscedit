@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PyQt6.QtGui import QPixmap, QTransform, QWheelEvent
+from PyQt6.QtGui import QPixmap, QWheelEvent
 
 from msc.es2.types import ES2Field
 from msc.es2.unity import Transform
@@ -124,29 +124,14 @@ class MapWidget(QWidget):
         def wheelEvent(self, event: QWheelEvent):
             if event.angleDelta().y() > 0:
                 self.zoom_in()
-                event.accept()
-                return
             elif event.angleDelta().y() < 0:
                 self.zoom_out()
-                event.accept()
-                return
 
         def zoom_in(self):
-            scale_tr = QTransform()
-            scale_tr.scale(self.factor, self.factor)
-
-            tr = self.transform() * scale_tr
-            self.setTransform(tr)
+            self.scale(self.factor, self.factor)
 
         def zoom_out(self):
-            scale_tr = QTransform()
-            scale_tr.scale(self.factor, self.factor)
-
-            scale_inverted, invertible = scale_tr.inverted()
-
-            if invertible:
-                tr = self.transform() * scale_inverted
-                self.setTransform(tr)
+            self.scale(1 / self.factor, 1 / self.factor)
 
     def __init__(self, parent=None):
         super().__init__(parent)
