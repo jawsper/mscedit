@@ -12,9 +12,9 @@ from msc.es2.types import ES2Header, ES2Field
 yaml = YAML()
 
 
-def _truncate_value(value: str):
-    if len(value) > 75:
-        return value[:75] + "..."
+def _truncate_value(value: str, max_length: int = 100):
+    if len(value) > max_length:
+        return value[:max_length] + "..."
     return value
 
 
@@ -51,7 +51,7 @@ class CarPartsEnum(str, Enum):
 
 
 with open("gui/vin.yaml") as f:
-    VIN_DATA: dict = yaml.load(f)["vin"]
+    VIN_DATA: dict[str, str] = yaml.load(f)["vin"]
 
 
 def _header_name(header: ES2Header):
