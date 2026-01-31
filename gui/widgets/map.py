@@ -121,7 +121,9 @@ class MapWidget(QWidget):
             self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
             self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-        def wheelEvent(self, event: QWheelEvent):
+        def wheelEvent(self, event: QWheelEvent | None) -> None:
+            if not event:
+                return
             if event.angleDelta().y() > 0:
                 self.zoom_in()
             elif event.angleDelta().y() < 0:
