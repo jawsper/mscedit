@@ -1,10 +1,15 @@
 from enum import Enum
+import re
 from typing import Any
 
 from PyQt6.QtCore import Qt, QAbstractItemModel, QModelIndex
+from ruamel.yaml import YAML
 
 from msc.es2.enums import ES2Key, ES2ValueType
-from msc.es2.types import ES2Field
+from msc.es2.types import ES2Header, ES2Field
+
+
+yaml = YAML()
 
 
 def _truncate_value(value: str):
@@ -17,6 +22,73 @@ class TreeItemIndex(int, Enum):
     TAG = 0
     TYPE = 1
     VALUE = 2
+
+
+class CarPartsEnum(str, Enum):
+    TGH = "tightness"
+    BLT = "bolts"
+    POS = "position"
+    WEA = "wear"
+    RGB = "color"
+    AID = "assembly_id"
+    VLV = "valves"
+    MT = "material"  # int32; name guessed; on doors, parcel shelf, seats
+    DAT = "data"  # various type; name guessed; fueltank (float, level?), rearaxle (str, type?), spring (int), headlight (float)
+    DT1 = "data1"
+    DT2 = "data2"
+    PT = "position/rotation"
+    # found on instrumentpanel, seems to be odometer
+    D1 = "d1"
+    D2 = "d2"
+    D3 = "d3"
+    # steering rack, left and right adjustment
+    TLS = "tls"
+    TRS = "trs"
+    RAT = "ratio"  # steering rack ratio
+    PTT = "ptt"  # something on engine block
+    T = "t"  # something on doors, maybe trim?
+    CC = "color code"  # found on doors/fenders/bumpers etc
+
+
+with open("gui/vin.yaml") as f:
+    VIN_DATA: dict = yaml.load(f)["vin"]
+
+
+def _header_name(header: ES2Header):
+    if header.collection_type != ES2Key.Null:
+        if header.key_type != ES2ValueType.Null:
+            return f"{header.collection_type.name}[{header.key_type.name}, {header.value_type.name}]"
+        return f"{header.collection_type.name}[{header.value_type.name}]"
+    return header.value_type.name
+
+
+def _tag_name(tag: str):
+    if tag.lower().startswith("vin"):
+        tag_vin = tag[3:6]
+        if tag_vin in VIN_DATA:
+            friendly_vin = VIN_DATA[tag_vin]
+            rest_of_vin = tag[6:]
+            match = re.match(
+                r"^(?P<variant>[A-Z]?)((?P<index>\d+)(?P<category>[A-Z][A-Z0-9]*))?$",
+                rest_of_vin,
+            )
+            if match:
+                friendly_name = f"{tag} - {friendly_vin}"
+                if variant := match.group("variant"):
+                    friendly_name += f" {variant}"
+                if index := match.group("index"):
+                    friendly_name += f" [{index}]"
+                if category := match.group("category"):
+                    if hasattr(CarPartsEnum, category):
+                        category = getattr(CarPartsEnum, category).value
+                        friendly_name += f" {category}"
+                    else:
+                        friendly_name += f" {category}"
+                return friendly_name
+            elif len(rest_of_vin) > 0:
+                print(f"FAILED TO MATCH '{tag}' '{friendly_vin}' '{rest_of_vin}'")
+            return f"[{friendly_vin}]{rest_of_vin}"
+    return tag
 
 class TreeItem(object):
     def __init__(self, data, parent=None):
