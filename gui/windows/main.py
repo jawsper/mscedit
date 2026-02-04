@@ -20,7 +20,7 @@ from msc.es2.enums import ES2ValueType
 from msc.es2.types import ES2Field
 
 from ..config import ConfigLoader, Config
-from ..dialogs import BoltCheckerDialog, ErrorDialog
+from ..dialogs import BoltCheckerDialog, ErrorDialog, OrderDialog
 from ..widgets.map import MapDockWidget
 from ..widgets.table import TableWidget
 
@@ -66,6 +66,7 @@ class MainWindow(QMainWindow):
         self.ui.action_CaseSensitive.triggered.connect(self.menu_search_mode)
 
         self.ui.action_ShowMap.triggered.connect(self.show_map)
+        self.ui.action_Orders.triggered.connect(self.show_orders)
         self.ui.action_BoltChecker.triggered.connect(self.show_boltchecker)
 
         tab_widget = cast(QTabWidget, self.ui.tabWidget)
@@ -297,6 +298,12 @@ class MainWindow(QMainWindow):
         """
         dialog = ErrorDialog(exception, self)
         dialog.exec()
+
+    def show_orders(self):
+        tab = self._current_tab()
+        if tab:
+            dialog = OrderDialog(tab.file_data, self)
+            dialog.exec()
 
     def _current_tab_index(self) -> int:
         """

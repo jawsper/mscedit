@@ -73,6 +73,7 @@
      <string>&amp;Tools</string>
     </property>
     <addaction name="action_BoltChecker"/>
+    <addaction name="action_Orders"/>
     <addaction name="action_ShowMap"/>
    </widget>
    <addaction name="menu_File"/>
@@ -137,6 +138,11 @@
   <action name="action_ShowMap">
    <property name="text">
     <string>Show &amp;map</string>
+   </property>
+  </action>
+  <action name="action_Orders">
+   <property name="text">
+    <string>Show &amp;orders</string>
    </property>
   </action>
   <action name="action_BoltChecker">
