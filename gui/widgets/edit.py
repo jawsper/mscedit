@@ -150,6 +150,12 @@ class EditWidget(QWidget):
         for label, val in zip(labels, value.as_list()):
             widget = self.__widget_generic_textbox("", val)[0]
             yield widget
+        color = QLabel(text="Color!")
+        color.setStyleSheet(
+            "border: 1px solid black; "
+            f"background-color: {value.to_css()};"
+        )
+        yield color
 
     def _widget_vector3(self, label, value: Vector3):
         labels = ("x", "y", "z")
@@ -234,7 +240,10 @@ class EditWidget(QWidget):
                 values = []
                 for i in range(layout.count()):
                     widget = layout.itemAt(i).widget()
-                    values.append(self._get_widget_result(widget, ES2ValueType.float))
+                    if isinstance(widget, QLineEdit):
+                        values.append(
+                            self._get_widget_result(widget, ES2ValueType.float)
+                        )
                 return Color(*values)
 
     def get_value(self):

@@ -12,6 +12,9 @@ class Color:
     def as_list(self):
         return [self.r, self.g, self.b, self.a]
 
+    def to_css(self):
+        return f"rgb({(int(self.r * 255))},{(int(self.g * 255))},{(int(self.b * 255))})"
+
 class MeshSettings:
     def __init__(self, data: bytes):
         self.raw = data
