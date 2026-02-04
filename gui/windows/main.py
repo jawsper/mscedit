@@ -40,7 +40,6 @@ def _copy_file(src, dst):
 
 
 class MainWindow(QMainWindow):
-    config_loader: ConfigLoader
     config: Config
     open_files: set[Path]
     _map_dock_widget: MapDockWidget | None
@@ -48,9 +47,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.config_loader = ConfigLoader()
-        self.config = self.config_loader.load()
         self._map_dock_widget = None
+
+        self.config = ConfigLoader().load()
 
         self.open_files = set()
 
@@ -121,7 +120,7 @@ class MainWindow(QMainWindow):
             return
 
         self.config.open_file_dir = str(filename.parent)
-        self.config_loader.save(self.config)
+        ConfigLoader().save(self.config)
         try:
             with open(filename, "rb") as f:
                 reader = ES2Reader(f)
@@ -324,4 +323,4 @@ class MainWindow(QMainWindow):
 
     def _save_open_files_to_config(self):
         self.config.open_files = [str(f) for f in self.open_files]
-        self.config_loader.save(self.config)
+        ConfigLoader().save(self.config)
