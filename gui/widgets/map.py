@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from PyQt6.QtGui import QPixmap, QWheelEvent
+from PyQt6.QtGui import QPixmap, QTransform, QWheelEvent
 
 from msc.es2.types import ES2Field
 from msc.es2.unity import Transform
@@ -45,51 +45,14 @@ class MapDockWidget(QDockWidget):
             del self._file_data[filename]
 
 
-def _scale_from_game_coordinates(
-    game_x: float,
-    game_z: float,
-    width: float,
-    height: float,
-) -> QPointF | None:
-    """
-    Scales game_x to background image size using GAME_X_RANGE
-    Scales game_z to background image height using GAME_Y_RANGE
-    """
-    GAME_X_RANGE = -1851, 2334
-    GAME_Z_RANGE = 1823, -1548
+def _scale_from_game_coordinates(game_x: float, game_z: float) -> QPointF:
+    transform = QTransform()
+    transform.scale(0.491, -0.457)
+    transform.translate(907.8 / 0.491, 828.6 / -0.457)
 
-    if not (GAME_X_RANGE[0] <= game_x <= GAME_X_RANGE[1]) or (
-        not (GAME_Z_RANGE[1] <= game_z <= GAME_Z_RANGE[0])
-    ):
-        return None
+    game_coord = QPointF(game_x, game_z)
 
-    def scale_value(
-        old_value: float,
-        old_min: float,
-        old_max: float,
-        new_min: float,
-        new_max: float,
-    ) -> float:
-        return (
-            (new_max - new_min) * (old_value - old_min) / (old_max - old_min)
-        ) + new_min
-
-    display_x = scale_value(
-        game_x,
-        GAME_X_RANGE[0],
-        GAME_X_RANGE[1],
-        0,
-        width,
-    )
-    display_y = scale_value(
-        game_z,
-        GAME_Z_RANGE[0],
-        GAME_Z_RANGE[1],
-        0,
-        height,
-    )
-
-    return QPointF(display_x, display_y)
+    return transform.map(game_coord)
 
 
 _marker_colors = cycle(
@@ -107,6 +70,7 @@ _marker_colors = cycle(
 class MapWidget(QWidget):
     _scene: QGraphicsScene
     _view: QGraphicsView
+    _background: QPixmap
 
     markers: dict[str, list]
 
@@ -156,30 +120,17 @@ class MapWidget(QWidget):
         layout = verticalLayout
         layout.insertWidget(1, self._view)
 
-        # QShortcut(
-        #     QKeySequence(QKeySequence.StandardKey.ZoomIn),
-        #     self._view,
-        #     context=Qt.ShortcutContext.WidgetShortcut,
-        #     # activated=self.zoom_in,
-        # ).activated.connect(self.zoom_in)
-
-        # QShortcut(
-        #     QKeySequence(QKeySequence.StandardKey.ZoomOut),
-        #     self._view,
-        #     context=Qt.ShortcutContext.WidgetShortcut,
-        #     # activated=self.zoom_out,
-        # ).activated.connect(self.zoom_out)
-
     def add_marker(self, tag: str, item: Transform):
         if tag in self.markers:
             return
         position = item.position
 
-        pos = _scale_from_game_coordinates(
-            position.x, position.z, self._background.width(), self._background.height()
-        )
+        pos = _scale_from_game_coordinates(position.x, position.z)
 
-        if pos is None:
+        if not QRectF(self._background.rect()).contains(pos):
+            logger.warning(
+                "Not adding marker because out of bounds '%s' @ '%s", tag, pos
+            )
             return
 
         color = next(_marker_colors)
