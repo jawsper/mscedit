@@ -235,36 +235,3 @@ class TreeModel(QAbstractItemModel):
                 TreeItem([tag, header_text, _truncate_value(str(entry.value))], parents[-1])
             )
 
-        # indentations = [0]
-        # number = 0
-
-        # while number < len(lines):
-        #     position = 0
-        #     while position < len(lines[number]):
-        #         if lines[number][position] != ' ':
-        #             break
-        #         position += 1
-
-        #     lineData = lines[number][position:].trimmed()
-
-        #     if lineData:
-        #         # Read the column data from the rest of the line.
-        #         columnData = [s for s in lineData.split('\t') if s]
-
-        #         if position > indentations[-1]:
-        #             # The last child of the current parent is now the new
-        #             # parent unless the current parent has no children.
-
-        #             if parents[-1].childCount() > 0:
-        #                 parents.append(parents[-1].child(parents[-1].childCount() - 1))
-        #                 indentations.append(position)
-
-        #         else:
-        #             while position < indentations[-1] and len(parents) > 0:
-        #                 parents.pop()
-        #                 indentations.pop()
-
-        #         # Append a new item to the current parent's list of children.
-        #         parents[-1].appendChild(TreeItem(columnData, parents[-1]))
-
-        #     number += 1
