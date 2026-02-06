@@ -1,15 +1,12 @@
+from collections import defaultdict
 from enum import Enum
 import re
-from typing import Any
+from typing import Any, Self, cast
 
 from PyQt6.QtCore import Qt, QAbstractItemModel, QModelIndex
-from ruamel.yaml import YAML
 
-from msc.es2.enums import ES2Key, ES2ValueType
-from msc.es2.types import ES2Header, ES2Field
-
-
-yaml = YAML()
+from msc.es2.types import ES2Field
+from .utils import header_name, tag_name
 
 
 def _truncate_value(value: str, max_length: int = 100):
@@ -24,120 +21,91 @@ class TreeItemIndex(int, Enum):
     VALUE = 2
 
 
-class CarPartsEnum(str, Enum):
-    TGH = "tightness"
-    BLT = "bolts"
-    POS = "position"
-    WEA = "wear"
-    RGB = "color"
-    AID = "assembly_id"
-    VLV = "valves"
-    MT = "material"  # int32; name guessed; on doors, parcel shelf, seats
-    DAT = "data"  # various type; name guessed; fueltank (float, level?), rearaxle (str, type?), spring (int), headlight (float)
-    DT1 = "data1"
-    DT2 = "data2"
-    PT = "position/rotation"
-    # found on instrumentpanel, seems to be odometer
-    D1 = "d1"
-    D2 = "d2"
-    D3 = "d3"
-    # steering rack, left and right adjustment
-    TLS = "tls"
-    TRS = "trs"
-    RAT = "ratio"  # steering rack ratio
-    PTT = "ptt"  # something on engine block
-    T = "t"  # something on doors, maybe trim?
-    CC = "color code"  # found on doors/fenders/bumpers etc
+class TableItem:
+    parent_item: Self | None
+    child_items: list[Self]
+    checked: Qt.CheckState
+    tag: str
+    type: str
+    value: str
 
+    def __init__(
+        self,
+        tag: str,
+        type: str,
+        value: str,
+        display_tag: str | None = None,
+        parent: Self | None = None,
+        checked: Qt.CheckState = Qt.CheckState.Unchecked,
+    ):
+        self.tag = tag
+        self.display_tag = display_tag if display_tag else tag
+        self.type = type
+        self.value = value
 
-with open("gui/vin.yaml") as f:
-    VIN_DATA: dict[str, str] = yaml.load(f)["vin"]
+        self.parent_item = parent
+        self.child_items = []
+        self.checked = checked
 
+    def appendChild(self, item: Self):
+        self.child_items.append(item)
 
-def _header_name(header: ES2Header):
-    if header.collection_type != ES2Key.Null:
-        if header.key_type != ES2ValueType.Null:
-            return f"{header.collection_type.name}[{header.key_type.name}, {header.value_type.name}]"
-        return f"{header.collection_type.name}[{header.value_type.name}]"
-    return header.value_type.name
-
-
-def _tag_name(tag: str):
-    if tag.lower().startswith("vin"):
-        tag_vin = tag[3:6]
-        if tag_vin in VIN_DATA:
-            friendly_vin = VIN_DATA[tag_vin]
-            rest_of_vin = tag[6:]
-            match = re.match(
-                r"^(?P<variant>[A-Z]?)((?P<index>\d+)(?P<category>[A-Z][A-Z0-9]*))?$",
-                rest_of_vin,
-            )
-            if match:
-                friendly_name = f"{tag} - {friendly_vin}"
-                if variant := match.group("variant"):
-                    friendly_name += f" {variant}"
-                if index := match.group("index"):
-                    friendly_name += f" [{index}]"
-                if category := match.group("category"):
-                    if hasattr(CarPartsEnum, category):
-                        category = getattr(CarPartsEnum, category).value
-                        friendly_name += f" {category}"
-                    else:
-                        friendly_name += f" {category}"
-                return friendly_name
-            elif len(rest_of_vin) > 0:
-                print(f"FAILED TO MATCH '{tag}' '{friendly_vin}' '{rest_of_vin}'")
-            return f"[{friendly_vin}]{rest_of_vin}"
-    return tag
-
-class TreeItem(object):
-    def __init__(self, data, parent=None):
-        self.parentItem = parent
-        self.itemData = data
-        self.childItems = []
-
-    def appendChild(self, item):
-        self.childItems.append(item)
-
-    def child(self, row):
-        return self.childItems[row]
+    def child(self, row: int):
+        return self.child_items[row]
 
     def childCount(self):
-        return len(self.childItems)
+        return len(self.child_items)
 
     def columnCount(self):
-        return len(self.itemData)
+        return 3
 
-    def data(self, column):
-        try:
-            return self.itemData[column]
-        except IndexError:
-            return None
+    def data(self, column: int, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole):
+        match column:
+            case 0:
+                return self.display_tag
+            case 1:
+                return self.type
+            case 2:
+                match role:
+                    case Qt.ItemDataRole.DisplayRole:
+                        return _truncate_value(self.value)
+                    case Qt.ItemDataRole.EditRole:
+                        return self.value
+                return None
+        return None
 
-    def setData(self, column, value):
-        if column < 0 or column >= self.columnCount():
-            return False
-        self.itemData[column] = value
+    def setData(self, column: int, value: Any):
+        match column:
+            case 0:
+                self.display_tag = value
+            case 1:
+                self.type = value
+            case 2:
+                self.value = value
+            case _:
+                return False
         return True
 
-    def parent(self):
-        return self.parentItem
+    def parent(self) -> Self:
+        return self.parent_item
 
     def row(self):
-        if self.parentItem:
-            return self.parentItem.childItems.index(self)
+        if self.parent_item:
+            return cast(Self, self.parent_item).child_items.index(self)
         return 0
 
 
 class TreeModel(QAbstractItemModel):
+    rootItem: TableItem
+
     def __init__(self, data: dict[str, ES2Field] | None, parent=None):
         super(TreeModel, self).__init__(parent)
 
-        self.rootItem = TreeItem(["Tag", "Type", "Value"])
+        self.rootItem = TableItem("Tag", "Type", "Value")
         if data is None:
             return
 
-        self.setupModelData(data, self.rootItem)
+        self.setupModelData(data)
 
     def columnCount(self, parent: QModelIndex) -> int:
         if parent.isValid():
@@ -145,33 +113,58 @@ class TreeModel(QAbstractItemModel):
         else:
             return self.rootItem.columnCount()
 
-    def data(self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole) -> Any:
+    def data(
+        self, index: QModelIndex, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole
+    ) -> Any:
         if not index.isValid():
             return None
 
-        if role != Qt.ItemDataRole.DisplayRole:
-            return None
+        item = cast(TableItem, index.internalPointer())
 
-        item = index.internalPointer()
+        match role:
+            case Qt.ItemDataRole.UserRole:
+                if index.column() == TreeItemIndex.TAG.value:
+                    return item.tag
+                return None
+            case Qt.ItemDataRole.CheckStateRole:
+                if index.column() == TreeItemIndex.TAG.value:
+                    return item.checked
+            case Qt.ItemDataRole.DisplayRole | Qt.ItemDataRole.EditRole:
+                return item.data(index.column(), role)
+        return None
 
-        return item.data(index.column())
+    def setData(
+        self,
+        index: QModelIndex,
+        value: Any,
+        role: Qt.ItemDataRole = Qt.ItemDataRole.EditRole,
+    ):
+        item = cast(TableItem, index.internalPointer())
+        match role:
+            case Qt.ItemDataRole.EditRole:
+                item.setData(index.column(), str(value))
+                self.dataChanged.emit(index, index)
+                return True
+            case Qt.ItemDataRole.CheckStateRole:
+                item.checked = value
+                self.dataChanged.emit(index, index, [role])
+                return True
 
-    def setData(self, index: QModelIndex, value: Any, role: Qt.ItemDataRole = Qt.ItemDataRole.EditRole):
-        if role == Qt.ItemDataRole.EditRole:
-            row = index.row()
-            child: TreeItem = self.rootItem.child(row)
-            child.setData(index.column(), _truncate_value(str(value)))
-            self.dataChanged.emit(index, index)
-            return True
         return False
 
-    def flags(self, index):
+    def flags(self, index: QModelIndex):
         if not index.isValid():
             return Qt.ItemFlag.NoItemFlags
 
-        return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+        return (
+            Qt.ItemFlag.ItemIsEnabled
+            | Qt.ItemFlag.ItemIsSelectable
+            | Qt.ItemFlag.ItemIsUserCheckable
+        )
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole):
+    def headerData(
+        self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole
+    ):
         if (
             orientation == Qt.Orientation.Horizontal
             and role == Qt.ItemDataRole.DisplayRole
@@ -195,17 +188,20 @@ class TreeModel(QAbstractItemModel):
         else:
             return QModelIndex()
 
-    def parent(self, index: Any) -> QModelIndex:
+    def parent(self, index: QModelIndex) -> QModelIndex:
         if not index.isValid():
             return QModelIndex()
 
-        childItem = index.internalPointer()
+        childItem = cast(TableItem, index.internalPointer())
         parentItem = childItem.parent()
 
         if parentItem == self.rootItem:
             return QModelIndex()
 
-        return self.createIndex(parentItem.row(), 0, parentItem)
+        try:
+            return self.createIndex(parentItem.row(), 0, parentItem)
+        except:
+            raise
 
     def rowCount(self, parent: QModelIndex) -> int:
         if parent.column() > 0:
@@ -214,24 +210,109 @@ class TreeModel(QAbstractItemModel):
         if not parent.isValid():
             parentItem = self.rootItem
         else:
-            parentItem = parent.internalPointer()
+            parentItem = cast(TableItem, parent.internalPointer())
 
         return parentItem.childCount()
 
-    def setupModelData(self, data: dict[str, ES2Field], parent: TreeItem):
-        parents = [parent]
-        for tag, entry in data.items():
-            header = entry.header
-            if header.collection_type != ES2Key.Null:
-                if header.key_type != ES2ValueType.Null:
-                    header_text = f"{header.collection_type.name}[{header.key_type.name}, {header.value_type.name}]"
-                else:
-                    header_text = (
-                        f"{header.collection_type.name}[{header.value_type.name}]"
-                    )
-            else:
-                header_text = header.value_type.name
-            parents[-1].appendChild(
-                TreeItem([tag, header_text, _truncate_value(str(entry.value))], parents[-1])
-            )
+    def setupModelData(self, data: dict[str, ES2Field]):
+        # regex = re.compile(r"^(?P<key>\D.+?)(\d+)$")
+        # data_items = sorted(
+        #     [
+        #         (m.group("key"), tag)
+        #         for tag, item in data.items()
+        #         if item.header.value_type == ES2ValueType.int32
+        #         and not tag.startswith("VIN")
+        #         and (m := regex.match(tag))
+        #     ],
+        #     key=lambda r: r[0],
+        # )
+        # from rich import print as rprint
 
+        # rprint(data_items)
+
+        grouped_items_prefixes = [
+            r"^(?P<prefix>VIN(\d{3})[B-Z]?)",
+            # r"^(?P<prefix>[A-Za-z][A-Za-z]+0?)",
+        ]
+
+        grouped_items: defaultdict[str, list] = defaultdict(list)
+        shopping_bags: defaultdict[str, dict] = defaultdict(dict)
+
+        for tag, entry in data.items():
+            # if tag.startswith("shoppingbag"):
+            #     m = re.match(r"^(?P<id>shoppingbag\d+)(?P<name>\w*)$", tag)
+            #     if m:
+            #         id = m.group("id")
+            #         if id in data:  # no root entry means bag is gone
+            #             shopping_bags[id][m.group("name")] = entry.value
+            #             continue
+
+            for prefix in grouped_items_prefixes:
+                if m := re.match(prefix, tag):
+                    grouped_items[m.group("prefix")].append((tag, entry))
+                    break
+            else:
+                display_tag = tag_name(tag)
+                item = TableItem(
+                    tag,
+                    header_name(entry.header),
+                    str(entry.value),
+                    display_tag,
+                    self.rootItem,
+                )
+                self.rootItem.appendChild(item)
+
+        for prefix, items in grouped_items.items():
+            entry = data[prefix] if prefix in data else None
+            root_item = TableItem(
+                prefix,
+                header_name(entry.header) if entry else "",
+                str(entry.value) if entry else "",
+                tag_name(prefix),
+                self.rootItem,
+            )
+            self.rootItem.appendChild(root_item)
+            for tag, entry in items:
+                if tag == prefix:
+                    continue
+                display_tag = tag_name(tag)
+                tree_item = TableItem(
+                    tag,
+                    header_name(entry.header),
+                    str(entry.value),
+                    display_tag,
+                    root_item,
+                )
+                root_item.appendChild(tree_item)
+
+        for shopping_bag_id, shopping_bag in shopping_bags.items():
+            shopping_bag_root = data[shopping_bag_id]
+            item = TableItem(
+                shopping_bag_id,
+                header_name(shopping_bag_root.header),
+                str(shopping_bag_root.value),
+                shopping_bag_id,
+                self.rootItem,
+            )
+            self.rootItem.appendChild(item)
+
+            for key, value in shopping_bag.items():
+                if key in ("", "Keys", "Values"):
+                    continue
+                tag = f"{shopping_bag_id}{key}"
+                entry = data[tag]
+                sub_item = TableItem(
+                    tag, header_name(entry.header), str(entry.value), key, item
+                )
+                item.appendChild(sub_item)
+
+            contents_item = TableItem("", "", "", "Contents", item)
+            item.appendChild(contents_item)
+
+            contents: dict[str, str] = dict(
+                zip(shopping_bag["Keys"], shopping_bag["Values"])
+            )
+            for name, count in contents.items():
+                # f"{shopping_bag_id}{name}",
+                sub_item = TableItem("", "", count, name, contents_item)
+                contents_item.appendChild(sub_item)
