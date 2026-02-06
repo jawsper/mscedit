@@ -50,6 +50,42 @@ class CarPartsEnum(str, Enum):
     CC = "color code"  # found on doors/fenders/bumpers etc
 
 
+def parse_tag(tag: str):
+    parsed_tag: dict[str, str] = {"name": tag}
+    if tag.lower().startswith("vin"):
+        tag_vin = tag[3:6]
+        if tag_vin in VIN_DATA:
+            parsed_tag["name"] = f"VIN{tag_vin}"
+            friendly_vin = VIN_DATA[tag_vin]
+            rest_of_vin = tag[6:]
+            match = re.match(
+                r"^(?P<variant>[A-Z]?)((?P<index>\d+)(?P<category>[A-Z][A-Z0-9]*)?)?$",
+                rest_of_vin,
+            )
+            parsed_tag["friendly_vin"] = friendly_vin
+            if match:
+                if variant := match.group("variant"):
+                    parsed_tag["variant"] = variant
+                if index := match.group("index"):
+                    parsed_tag["index"] = index
+                if category := match.group("category"):
+                    if hasattr(CarPartsEnum, category):
+                        category = getattr(CarPartsEnum, category).value
+                    parsed_tag["category"] = category
+            elif len(rest_of_vin) > 0:
+                logger.warning(
+                    f"FAILED TO MATCH '{tag}' '{friendly_vin}' '{rest_of_vin}'"
+                )
+                parsed_tag["rest_of_vin"] = rest_of_vin
+    return parsed_tag
+
+
+def tag_name2(parsed_tag: dict):
+    if "friendly_vin" in parsed_tag:
+        return parsed_tag["friendly_vin"]
+    return parsed_tag["name"]
+
+
 def tag_name(tag: str):
     if tag.lower().startswith("vin"):
         tag_vin = tag[3:6]
@@ -80,3 +116,8 @@ def tag_name(tag: str):
             return f"[{friendly_vin}]{rest_of_vin}"
     return tag
 
+
+def scale_value(
+    old_value: float, old_min: float, old_max: float, new_min: float, new_max: float
+) -> float:
+    return ((new_max - new_min) * (old_value - old_min) / (old_max - old_min)) + new_min

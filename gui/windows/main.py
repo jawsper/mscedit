@@ -22,6 +22,7 @@ from msc.es2.types import ES2Field
 from ..config import ConfigLoader, Config
 from ..dialogs import BoltCheckerDialog, ErrorDialog
 from ..widgets.map import MapDockWidget
+from ..widgets.report import ReportDockWidget
 from ..widgets.table import TableWidget
 
 logger = logging.getLogger(__name__)
@@ -43,11 +44,13 @@ class MainWindow(QMainWindow):
     config: Config
     open_files: set[Path]
     _map_dock_widget: MapDockWidget | None
+    _report_dock_widget: ReportDockWidget | None
 
     def __init__(self):
         super().__init__()
 
         self._map_dock_widget = None
+        self._report_dock_widget = None
 
         self.config = ConfigLoader().load()
 
@@ -65,6 +68,7 @@ class MainWindow(QMainWindow):
         self.ui.action_CaseSensitive.triggered.connect(self.menu_search_mode)
 
         self.ui.action_ShowMap.triggered.connect(self.show_map)
+        self.ui.action_show_report.triggered.connect(self.show_report)
         self.ui.action_BoltChecker.triggered.connect(self.show_boltchecker)
 
         tab_widget = cast(QTabWidget, self.ui.tabWidget)
@@ -135,6 +139,8 @@ class MainWindow(QMainWindow):
             self.open_new_tab(filename, file_data)
             if self._map_dock_widget:
                 self._map_dock_widget.add_file_data(filename, file_data)
+            if self._report_dock_widget:
+                self._report_dock_widget.add_file_data(filename, file_data)
         return file_data
 
     def open_new_tab(self, filename: Path, file_data: dict[str, ES2Field]):
@@ -246,6 +252,8 @@ class MainWindow(QMainWindow):
             self.open_files.remove(tab.filename)
             if self._map_dock_widget:
                 self._map_dock_widget.remove_file_data(tab.filename)
+            if self._report_dock_widget:
+                self._report_dock_widget.remove_file_data(tab.filename)
             self._save_open_files_to_config()
         tab_widget.removeTab(index)
 
@@ -280,6 +288,19 @@ class MainWindow(QMainWindow):
         self._map_dock_widget.reset()
         for tab in self._all_tabs():
             self._map_dock_widget.add_file_data(tab.filename, tab.file_data)
+
+    def show_report(self):
+        if not self._report_dock_widget:
+            self._report_dock_widget = ReportDockWidget(self)
+        self.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self._report_dock_widget
+        )
+        self._report_dock_widget.setFloating(False)
+        self._report_dock_widget.show()
+
+        self._report_dock_widget.reset()
+        for tab in self._all_tabs():
+            self._report_dock_widget.add_file_data(tab.filename, tab.file_data)
 
     def show_boltchecker(self):
         """
