@@ -1,3 +1,5 @@
+from functools import partial
+import logging
 from pathlib import Path
 from typing import cast
 
@@ -6,15 +8,29 @@ from PyQt6.QtCore import (
     QModelIndex,
     QSortFilterProxyModel,
     pyqtSignal,
-    QAbstractItemModel,
     QItemSelection,
+    QPoint,
 )
-from PyQt6.QtWidgets import QDialog, QWidget, QTreeView, QVBoxLayout, QAbstractItemView
+from PyQt6.QtGui import (
+    QGuiApplication,
+    QAction,
+)
+from PyQt6.QtWidgets import (
+    QDialog,
+    QWidget,
+    QTreeView,
+    QVBoxLayout,
+    QAbstractItemView,
+    QMenu,
+)
 
+from msc.es2.enums import ES2ValueType
 from msc.es2.types import ES2Field
 
 from ..dialogs import EditDialog
-from ..models import TreeModel, TreeItemIndex
+from ..models import TreeModel, TreeItemIndex, TableItem
+
+logger = logging.getLogger(__name__)
 
 
 class TreeView(QTreeView):
@@ -26,6 +42,10 @@ class TreeView(QTreeView):
 
 
 class TableWidget(QWidget):
+    datamodel: QSortFilterProxyModel
+    tree_view: TreeView
+    context_menu: QMenu
+
     filename: Path
     file_data: dict[str, ES2Field]
     changed: bool = False
@@ -62,8 +82,14 @@ class TableWidget(QWidget):
             QAbstractItemView.SelectionMode.ExtendedSelection
         )
         self.tree_view.setSortingEnabled(True)
+        self.tree_view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.tree_view.doubleClicked.connect(self.treeView_doubleClicked)
+        self.tree_view.customContextMenuRequested.connect(
+            self.treeview_contextmenu_requested
+        )
         self.tree_view.selection_changed.connect(self.treeview_selection_changed)
+
+        self.context_menu = QMenu(self.tree_view)
 
     def reload(self, data: dict[str, ES2Field]):
         self.file_data = data
@@ -90,16 +116,43 @@ class TableWidget(QWidget):
         )
 
     def treeView_doubleClicked(self, index: QModelIndex):
-        self.edit_index(index)
+        match index.column():
+            case TreeItemIndex.TAG.value:
+                print("dclicked the tag")
+            case TreeItemIndex.VALUE.value:
+                self.edit_index(index)
+
+    def treeview_contextmenu_requested(self, point: QPoint):
+        index = self.tree_view.indexAt(point)
+        global_point = self.tree_view.viewport().mapToGlobal(point)
+        match index.column():
+            case TreeItemIndex.TYPE.value:
+                menu_item1 = QAction("Test", self.context_menu)
+                self.context_menu.exec([menu_item1], global_point)
+            case TreeItemIndex.VALUE.value:
+                action_copy_value = QAction("Copy", self.context_menu)
+                action_copy_value.triggered.connect(
+                    partial(
+                        self.action_copy_value_triggered,
+                        index=index,
+                    )
+                )
+                self.context_menu.exec([action_copy_value], global_point)
+
+    def action_copy_value_triggered(self, checked: bool, *, index: QModelIndex):
+        clipboard = QGuiApplication.clipboard()
+        assert clipboard
+        clipboard.setText(index.data(Qt.ItemDataRole.EditRole))
 
     def edit_index(self, index: QModelIndex):
         tag_index = index.siblingAtColumn(TreeItemIndex.TAG.value)
-        tag = cast(str, tag_index.data())
+        tag: str = cast(str, tag_index.data(Qt.ItemDataRole.UserRole))
+        display_tag = cast(str, tag_index.data(Qt.ItemDataRole.DisplayRole))
 
         if tag not in self.file_data:
             return
 
-        dialog = EditDialog(tag, self.file_data[tag], self)
+        dialog = EditDialog(display_tag, self.file_data[tag], self)
         result = dialog.exec()
         if result == QDialog.DialogCode.Accepted:
             dialog_result = dialog.get_value()
