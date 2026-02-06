@@ -158,12 +158,12 @@ class MainWindow(QMainWindow):
     def tags_selected_changed(
         self,
         selected: dict[str, ES2Field],
-        deselected: set,
+        deselected: list[str],
         *,
         filename: str,
         tab_index: int,
     ):
-        logger.info(
+        logger.debug(
             "Selection changed %s %s %s %d", selected, deselected, filename, tab_index
         )
 

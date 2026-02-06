@@ -52,7 +52,7 @@ class TableWidget(QWidget):
 
     data_changed = pyqtSignal(bool)
     tag_selected = pyqtSignal(str)
-    tags_selected_changed = pyqtSignal(dict, set)
+    tags_selected_changed = pyqtSignal(dict, list)
 
     def __init__(self, parent=None, *, filename: Path, data: dict[str, ES2Field]):
         super().__init__(parent)
@@ -98,17 +98,33 @@ class TableWidget(QWidget):
     def treeview_selection_changed(
         self, selected: QItemSelection, deselected: QItemSelection
     ):
-        def _selection_to_tags(selection: QItemSelection) -> set[str]:
+        def _selection_to_tags(selection: QItemSelection) -> list[str]:
             indexes = selection.indexes()
 
-            tags = {
-                index.siblingAtColumn(TreeItemIndex.TAG.value).data()
-                for index in indexes
-            }
+            tags = []
+
+            for index in indexes:
+                table_item = cast(
+                    TableItem,
+                    cast(QSortFilterProxyModel, index.model())
+                    .mapToSource(index)
+                    .internalPointer(),
+                )
+                if table_item.tag not in tags:
+                    tags.append(table_item.tag)
+                if table_item.childCount() > 0:
+                    for child in cast(list[TableItem], table_item.child_items):
+                        data = self.file_data[child.tag]
+                        if data.header.value_type == ES2ValueType.transform:
+                            if child.tag not in tags:
+                                tags.append(child.tag)
+
             return tags
 
-        def _selected_tags_to_dict(selection: set[str]) -> dict[str, ES2Field]:
-            return {tag: self.file_data[tag] for tag in selection}
+        def _selected_tags_to_dict(selection: list[str]) -> dict[str, ES2Field]:
+            return {
+                tag: self.file_data[tag] for tag in selection if tag in self.file_data
+            }
 
         self.tags_selected_changed.emit(
             _selected_tags_to_dict(_selection_to_tags(selected)),
