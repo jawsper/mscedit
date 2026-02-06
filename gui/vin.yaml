@@ -1,3 +1,35 @@
+parts:
+  carbattery0:
+    DA1:
+      name: capacity
+      range:
+        min: 0
+        max: 145
+      good: 145
+    DA2:
+      name: charge
+      range:
+        min: 0
+        max: 145
+      good: 145
+    DA3:
+      name: discharge
+  oilfiltr0:
+    WEA:
+      name: dirt
+      range:
+        min: 100
+        max: 0
+      good: 0
+  revlimiter0:
+    DT1:
+  VIN133:
+    DAT:
+      name: tightness
+      range:
+        min: 0
+        max: 10 # ?
+      good: 2
 vin:
   '101': engineblock
   '102': crankshaft

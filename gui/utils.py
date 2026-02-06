@@ -12,6 +12,7 @@ yaml = YAML()
 
 with open("gui/vin.yaml") as f:
     __raw_yaml = yaml.load(f)
+    PARTS_DATA: dict[str, dict] = __raw_yaml["parts"]
     VIN_DATA: dict[str, str] = __raw_yaml["vin"]
 
 
