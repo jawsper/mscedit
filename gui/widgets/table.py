@@ -49,6 +49,8 @@ class TableWidget(QWidget):
         self.datamodel = QSortFilterProxyModel()
         self.datamodel.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.datamodel.setSortCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        self.datamodel.setRecursiveFilteringEnabled(True)
+        self.datamodel.setAutoAcceptChildRows(True)
         self.datamodel.setSourceModel(TreeModel(self.file_data))
 
         self.tree_view.setModel(self.datamodel)
