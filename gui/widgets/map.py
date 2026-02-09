@@ -23,9 +23,7 @@ class MapDockWidget(QDockWidget):
     _file_data: dict[Path, dict[str, ES2Field]]
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.setWindowTitle("Map view")
+        super().__init__("Map view", *args, **kwargs)
 
         self.reset()
 

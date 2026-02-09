@@ -22,9 +22,8 @@ class ReportDockWidget(QDockWidget):
     _file_data: dict[Path, dict[str, ES2Field]]
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__("Car report", *args, **kwargs)
 
-        self.setWindowTitle("Car report")
 
         self.report = ReportWidget()
         self.setWidget(self.report)
