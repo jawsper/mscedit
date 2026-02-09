@@ -38,9 +38,16 @@ class CarPartsEnum(str, Enum):
     DT2 = "data2"
     PT = "position/rotation"
     # found on instrumentpanel, seems to be odometer
-    D1 = "d1"
-    D2 = "d2"
-    D3 = "d3"
+    # also about instrumentpanel; A: no clock, B: clock, C: tacho
+    D1 = "d1" # odo precision
+    D2 = "d2" # odo shown
+    D3 = "d3" # features
+    """
+    0: radio + switch
+    1: radio + no switch
+    2: no radio, switch
+    3: no radio, no switch <- to be confirmed but pretty certain
+    """
     # steering rack, left and right adjustment
     TLS = "tls"
     TRS = "trs"
