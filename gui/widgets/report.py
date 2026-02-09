@@ -24,6 +24,7 @@ class ReportDockWidget(QDockWidget):
     def __init__(self, *args, **kwargs):
         super().__init__("Car report", *args, **kwargs)
 
+        self.reset()
 
         self.report = ReportWidget()
         self.setWidget(self.report)
@@ -150,6 +151,7 @@ class ReportWidget(QWidget):
                     }
                 )
 
+        self.model.clear()
         for row_data in parts_list:
             items = []
             for col in ["name", "key", "value"]:
