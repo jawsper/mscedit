@@ -281,24 +281,16 @@ class MainWindow(QMainWindow):
         """
         Slot that gets triggered by the "Show map" menu item.
         """
-        if not self._map_dock_widget:
-            self._map_dock_widget = MapDockWidget(self)
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self._map_dock_widget)
         self._map_dock_widget.setFloating(False)
         self._map_dock_widget.show()
 
     def show_report(self):
-        if not self._report_dock_widget:
-            self._report_dock_widget = ReportDockWidget(self)
         self.addDockWidget(
             Qt.DockWidgetArea.RightDockWidgetArea, self._report_dock_widget
         )
         self._report_dock_widget.setFloating(False)
         self._report_dock_widget.show()
-
-        self._report_dock_widget.reset()
-        for tab in self._all_tabs():
-            self._report_dock_widget.add_file_data(tab.filename, tab.file_data)
 
     def show_boltchecker(self):
         """
