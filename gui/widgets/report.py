@@ -142,7 +142,7 @@ class ReportWidget(QWidget):
                             }
                         )
                         if val_name == "WEA":
-                            skip_wear.add(part_prefix)
+                            skip_wear.add(row)
                         # print(val_name, installed_part[val_name], val_data)
 
         for part_prefix, installed_part in installed_parts.items():
