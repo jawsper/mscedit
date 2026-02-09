@@ -24,6 +24,7 @@ class ReportDockWidget(QDockWidget):
     def __init__(self, *args, **kwargs):
         super().__init__("Car report", *args, **kwargs)
 
+        self.setVisible(False)
         self.reset()
 
         self.report = ReportWidget()

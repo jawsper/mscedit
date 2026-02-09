@@ -6,7 +6,10 @@ import shutil
 import tempfile
 from typing import cast
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import (
+    Qt,
+    pyqtSignal,
+)
 from PyQt6.QtWidgets import (
     QMainWindow,
     QApplication,
@@ -43,14 +46,14 @@ def _copy_file(src, dst):
 class MainWindow(QMainWindow):
     config: Config
     open_files: set[Path]
-    _map_dock_widget: MapDockWidget | None
-    _report_dock_widget: ReportDockWidget | None
+    _map_dock_widget: MapDockWidget
+    _report_dock_widget: ReportDockWidget
+
+    file_loaded = pyqtSignal(Path, dict)
+    file_unloaded = pyqtSignal(Path)
 
     def __init__(self):
         super().__init__()
-
-        self._map_dock_widget = None
-        self._report_dock_widget = None
 
         self.config = ConfigLoader().load()
 
@@ -77,6 +80,13 @@ class MainWindow(QMainWindow):
         tab_widget.tabCloseRequested.connect(self.tab_close_requested)
 
         self.ui.searchField.textChanged.connect(self.searchField_textChanged)
+
+        self._map_dock_widget = MapDockWidget(self)
+        self._report_dock_widget = ReportDockWidget(self)
+        self.file_loaded.connect(self._map_dock_widget.add_file_data)
+        self.file_loaded.connect(self._report_dock_widget.add_file_data)
+        self.file_unloaded.connect(self._map_dock_widget.remove_file_data)
+        self.file_unloaded.connect(self._report_dock_widget.remove_file_data)
 
         if self.config.open_files:
             for file in self.config.open_files:
@@ -137,10 +147,7 @@ class MainWindow(QMainWindow):
             self.open_files.add(filename)
             self._save_open_files_to_config()
             self.open_new_tab(filename, file_data)
-            if self._map_dock_widget:
-                self._map_dock_widget.add_file_data(filename, file_data)
-            if self._report_dock_widget:
-                self._report_dock_widget.add_file_data(filename, file_data)
+            self.file_loaded.emit(filename, file_data)
         return file_data
 
     def open_new_tab(self, filename: Path, file_data: dict[str, ES2Field]):
@@ -250,10 +257,7 @@ class MainWindow(QMainWindow):
         tab = cast(TableWidget | None, tab_widget.widget(index))
         if tab:
             self.open_files.remove(tab.filename)
-            if self._map_dock_widget:
-                self._map_dock_widget.remove_file_data(tab.filename)
-            if self._report_dock_widget:
-                self._report_dock_widget.remove_file_data(tab.filename)
+            self.file_unloaded.emit(tab.filename)
             self._save_open_files_to_config()
         tab_widget.removeTab(index)
 

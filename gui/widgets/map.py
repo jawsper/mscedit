@@ -25,6 +25,7 @@ class MapDockWidget(QDockWidget):
     def __init__(self, *args, **kwargs):
         super().__init__("Map view", *args, **kwargs)
 
+        self.setVisible(False)
         self.reset()
 
         self._map_widget = MapWidget()
