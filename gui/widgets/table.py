@@ -92,6 +92,7 @@ class TableWidget(QWidget):
         self.context_menu = QMenu(self.tree_view)
 
     def reload(self, data: dict[str, ES2Field]):
+        self.data_changed.emit(False)
         self.file_data = data
         self.datamodel.setSourceModel(TreeModel(data))
 
