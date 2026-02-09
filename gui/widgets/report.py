@@ -19,7 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 class ReportDockWidget(QDockWidget):
-    _file_data: dict[Path, dict[str, ES2Field]]
+    _file_name: Path | None
+    report: "ReportWidget"
 
     def __init__(self, *args, **kwargs):
         super().__init__("Car report", *args, **kwargs)
@@ -29,28 +30,29 @@ class ReportDockWidget(QDockWidget):
 
         self.report = ReportWidget()
         self.setWidget(self.report)
-        # self.setMinimumSize(self.report.table_widget.size())
 
     def reset(self):
-        self._file_data = {}
+        self._file_name = None
 
     def add_file_data(self, filename: Path, data: dict[str, ES2Field]):
         if "VIN1010AID" not in data:
-            logger.debug("Not adding data, missing VIN1010AID '%s'", filename)
+            logger.debug(
+                "Not adding data, missing VIN1010AID (engine block) '%s'", filename
+            )
             return
-        logger.info("Adding file data '%s'", filename)
-
-        self._file_data[filename] = data
-
+        logger.info("Setting file data '%s'", filename)
+        self._file_name = filename
         self.report.set_data(data)
 
     def remove_file_data(self, filename: Path):
-        if filename in self._file_data:
-            logger.info("Removing file data '%s'", filename)
-            del self._file_data[filename]
+        if self._file_name == filename:
+            self.report.clear_data()
+            self._file_name = None
 
 
 class ReportWidget(QWidget):
+    model: QStandardItemModel
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -60,9 +62,13 @@ class ReportWidget(QWidget):
         self.table_widget = QTableView()
         self.table_widget.setSortingEnabled(True)
         self.model = QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["Part", "Condition"])
+        self.clear_data()
         self.table_widget.setModel(self.model)
         layout.addWidget(self.table_widget)
+
+    def clear_data(self):
+        self.model.clear()
+        self.model.setHorizontalHeaderLabels(["Part", "Item", "Condition"])
 
     def set_data(self, data: dict[str, ES2Field]):
         sorted_data: dict[str, ES2Field] = {k: data[k] for k in sorted(data.keys())}
@@ -152,7 +158,7 @@ class ReportWidget(QWidget):
                     }
                 )
 
-        self.model.clear()
+        self.clear_data()
         for row_data in parts_list:
             items = []
             for col in ["name", "key", "value"]:
