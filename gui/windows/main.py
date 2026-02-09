@@ -83,9 +83,7 @@ class MainWindow(QMainWindow):
 
         self._map_dock_widget = MapDockWidget(self)
         self._report_dock_widget = ReportDockWidget(self)
-        self.file_loaded.connect(self._map_dock_widget.add_file_data)
         self.file_loaded.connect(self._report_dock_widget.add_file_data)
-        self.file_unloaded.connect(self._map_dock_widget.remove_file_data)
         self.file_unloaded.connect(self._report_dock_widget.remove_file_data)
 
         if self.config.open_files:
@@ -288,10 +286,6 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self._map_dock_widget)
         self._map_dock_widget.setFloating(False)
         self._map_dock_widget.show()
-
-        self._map_dock_widget.reset()
-        for tab in self._all_tabs():
-            self._map_dock_widget.add_file_data(tab.filename, tab.file_data)
 
     def show_report(self):
         if not self._report_dock_widget:

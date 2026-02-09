@@ -1,6 +1,5 @@
 from itertools import cycle
 import logging
-from pathlib import Path
 
 from PyQt6.QtCore import Qt, QPointF, QRectF
 from PyQt6.QtWidgets import (
@@ -12,7 +11,6 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QPixmap, QTransform, QWheelEvent
 
-from msc.es2.types import ES2Field
 from msc.es2.unity import Transform
 
 
@@ -20,28 +18,15 @@ logger = logging.getLogger(__name__)
 
 
 class MapDockWidget(QDockWidget):
-    _file_data: dict[Path, dict[str, ES2Field]]
-
     def __init__(self, *args, **kwargs):
         super().__init__("Map view", *args, **kwargs)
 
         self.setVisible(False)
-        self.reset()
 
         self._map_widget = MapWidget()
         self.setWidget(self._map_widget)
 
-    def reset(self):
-        self._file_data = {}
 
-    def add_file_data(self, filename: Path, data: dict[str, ES2Field]):
-        logger.info("Adding file data '%s'", filename)
-        self._file_data[filename] = data
-
-    def remove_file_data(self, filename: Path):
-        if filename in self._file_data:
-            logger.info("Removing file data '%s'", filename)
-            del self._file_data[filename]
 
 
 def _scale_from_game_coordinates(game_x: float, game_z: float) -> QPointF:
